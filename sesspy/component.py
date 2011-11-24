@@ -141,7 +141,7 @@ class ComponentConfig(object):
                 opener = self.local_opener_factory()
             self.locals.opener = opener
         if opener is None and self.global_opener is not None:
-            self.opener = self.global_opener
+            opener = self.global_opener
         if opener is None and self.component is not None:
             from .openers import SingletonOpener
             opener = SingletonOpener(self.component)

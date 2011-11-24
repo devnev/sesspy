@@ -16,6 +16,8 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with sesspy.  If not, see <http://www.gnu.org/licenses/>.
 
+from __future__ import with_statement
+
 if __name__ == '__main__':
     import sys
     import os, os.path
@@ -101,6 +103,101 @@ class Test_ComponentRef_resolve(unittest.TestCase):
         ref = component.ComponentRef("component", reg=reg)
         self.assertEqual(ref.resolve(), cc)
         self.assertEqual(ref.ref, cc)
+
+class Test_ComponentConfig_context(unittest.TestCase):
+    def setUp(self):
+        self.obj = mock.Mock()
+        self.opener = mock.Mock()
+        self.opener.open.return_value = self.obj
+        self.opener.commit.return_value = None
+        self.opener.abort.return_value = None
+        self.factory = mock.Mock()
+        self.factory.return_value = self.opener
+
+    def tearDown(self):
+        del self.obj
+        del self.opener
+        del self.factory
+
+    def test_component(self):
+        c = component.ComponentConfig(component=self.obj)
+        ctx = c.local_context()
+        with ctx as o:
+            self.assertEqual(o, self.obj)
+
+    def test_global_opener(self):
+        c = component.ComponentConfig(global_opener=self.opener)
+        ctx = c.local_context()
+        with ctx as o:
+            self.assertEqual(o, self.obj)
+        self.assertEqual(self.opener.method_calls,
+                         [('open',), ('commit', (self.obj,))])
+
+    def test_global_factory(self):
+        c = component.ComponentConfig(global_opener_factory=self.factory)
+        ctx = c.local_context()
+        self.assertEqual(self.factory.call_count, 1)
+        self.assertEqual(self.factory.call_args, ((), {}))
+
+        with ctx as o:
+            self.assertEqual(o, self.obj)
+        self.assertEqual(self.opener.method_calls,
+                         [('open',), ('commit', (self.obj,))])
+
+        ctx = c.local_context()
+        self.assertEqual(self.factory.call_count, 1)
+
+class Test_ComponentConfig_localcontext(unittest.TestCase):
+    def setUp(self):
+        self.obj = mock.Mock()
+        self.opener = mock.Mock()
+        self.opener.open.return_value = self.obj
+        self.opener.commit.return_value = None
+        self.opener.abort.return_value = None
+        self.factory = mock.Mock()
+        self.factory.return_value = self.opener
+
+    def tearDown(self):
+        del self.obj
+        del self.opener
+        del self.factory
+
+    def test_opener_is_created(self):
+        c = component.ComponentConfig(local_opener_factory=self.factory)
+        ctx = c.local_context()
+        self.assertEqual(self.factory.call_count, 1)
+        self.assertEqual(self.factory.call_args, ((), {}))
+
+    def test_opener_is_called(self):
+        c = component.ComponentConfig(local_opener_factory=self.factory)
+        with c.local_context() as o:
+            self.assertEqual(o, self.obj)
+            self.assertEqual(self.opener.method_calls,
+                             [('open',)])
+        self.assertEqual(self.opener.method_calls,
+                         [('open',), ('commit', (self.obj,))])
+
+    def test_opener_is_created_once_locally(self):
+        c = component.ComponentConfig(local_opener_factory=self.factory)
+        ctx = c.local_context()
+        ctx = c.local_context()
+        self.assertEqual(self.factory.call_count, 1)
+        self.assertEqual(self.factory.call_args, ((), {}))
+
+    def test_opener_is_created_once_perthread(self):
+        c = component.ComponentConfig(local_opener_factory=self.factory)
+        ctx = c.local_context()
+
+        import threading
+        t = threading.Thread(target=c.local_context)
+        t.start()
+        t.join()
+        self.assertEqual(self.factory.call_count, 2)
+        self.assertEqual(self.factory.call_args, ((), {}))
+
+        ctx = c.local_context()
+        self.assertEqual(self.factory.call_count, 2)
+        self.assertEqual(self.factory.call_args, ((), {}))
 
 if __name__ == '__main__':
     unittest.main()
