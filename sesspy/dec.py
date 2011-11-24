@@ -36,6 +36,9 @@ class ComponentInjector(object):
             ref = ComponentRef(ref)
         self.ref = ref
         self.arg_kw = arg_kw
+        self.__name__ = func.__name__
+        self.__doc__ = func.__doc__
+        self.__module__ = func.__module__
 
     def copy(self, **kwargs):
         kwargs.setdefault('ref', self.ref)
