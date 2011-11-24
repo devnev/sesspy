@@ -131,7 +131,7 @@ class ComponentConfig(object):
             else:
                 self.global_opener = self.global_opener_factory()
 
-        opener = getattr(self.locals.opener, None)
+        opener = getattr(self.locals, 'opener', None)
         if opener is None and self.local_opener_factory is not None:
             if self.global_opener is not None:
                 opener = self.local_opener_factory(self.global_opener)
@@ -148,4 +148,4 @@ class ComponentConfig(object):
         if opener is None:
             raise ComponentError("Unable to create context for %r" % self)
 
-        return LocalContext(self.opener)
+        return LocalContext(opener)

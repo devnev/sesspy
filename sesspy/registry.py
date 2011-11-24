@@ -25,12 +25,12 @@ class DuplicateComponentError(Exception):
 
 class ComponentRegistry(object):
     def __init__(self):
-        self.config_map = {}
+        self.configs = {}
 
     def register_component(self, name, config):
         if name in self.configs:
             raise DuplicateComponentError("Component with name %s already registered" % name)
-        self.config_map[name] = config
+        self.configs[name] = config
         return config
 
     def register_factory(self, name, opener_factory):
@@ -52,7 +52,7 @@ class ComponentRegistry(object):
         return self.register_component(name, config)
 
     def __getitem__(self, name):
-        return ComponentRef(self.config_map[name])
+        return ComponentRef(self.configs[name])
 
     def get(self, name):
         return ComponentRef(name, reg=self)
