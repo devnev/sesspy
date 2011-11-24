@@ -44,7 +44,12 @@ class ComponentInjector(object):
         else:
             return self.func(*args, **kwargs)
 
-def with_component(ref):
+def with_component(ref, arg_kw=None):
+    if arg_kw is None:
+        if isinstance(ref, basestring) and '.' not in ref:
+            arg_kw = ref
+        else:
+            raise ValueError("arg_kw must not be None unless ref is a registry reference")
     def decorator(func):
-        return ComponentInjector(ref, func)
+        return ComponentInjector(ref, func, arg_kw)
     return decorator
