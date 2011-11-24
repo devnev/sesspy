@@ -54,14 +54,18 @@ class ComponentRef(object):
             except AttributeError:
                 pass
             else:
-                return d.get(self.dictkey)
+                return d.get(self.dictkey, self)
         return self
 
     def __set__(self, obj, ref):
         if obj is None:
             self.ref = ref
         else:
-            obj.__dict__[self.dictkey] = self.copy(ref=ref, obj=obj)
+            if isinstance(ref, ComponentRef):
+                ref = ref.copy(obj=obj)
+            else:
+                ref = self.copy(ref=ref, obj=obj)
+            obj.__dict__[self.dictkey] = ref
 
     def resolve(self, obj=None):
         if obj is not None and obj is not self.obj:
