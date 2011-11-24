@@ -18,6 +18,11 @@
 
 from __future__ import absolute_import
 
+try:
+    str_ = basestring
+except NameError:
+    str_ = str
+
 class ResolveError(ValueError):
     pass
 
@@ -73,11 +78,11 @@ class ComponentRef(object):
 
         if hasattr(self.ref, 'local_context'):
             resolved = self.ref
-        elif isinstance(self.ref, basestring) and '.' in self.ref:
+        elif isinstance(self.ref, str_) and '.' in self.ref:
             _imp, _from = self.ref.rsplit('.', 1)
             _temp = __import__(_imp, fromlist=[_from])
             resolved = getattr(_temp, _from)
-        elif isinstance(self.ref, basestring) and self.reg is not None:
+        elif isinstance(self.ref, str_) and self.reg is not None:
             resolved = self.reg[self.ref]
             if hasattr(resolved, 'resolve'):
                 resolved = resolved.resolve()

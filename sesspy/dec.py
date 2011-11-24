@@ -20,6 +20,11 @@ from __future__ import absolute_import, with_statement
 
 from .component import ComponentRef
 
+try:
+    str_ = basestring
+except NameError:
+    str_ = str
+
 class ComponentInjector(object):
     def __init__(self, ref, func, arg_kw):
         for attr in ('__name__', '__doc__', '__module__'):
@@ -63,7 +68,7 @@ class ComponentInjector(object):
 
 def with_component(ref, arg_kw=None):
     if arg_kw is None:
-        if isinstance(ref, basestring) and '.' not in ref:
+        if isinstance(ref, str_) and '.' not in ref:
             arg_kw = ref
         else:
             raise ValueError("arg_kw must not be None unless ref is a registry reference")
