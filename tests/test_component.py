@@ -31,6 +31,7 @@ if __name__ == '__main__':
     )
 
 import unittest
+import mock
 from sesspy import component
 
 class Test_ComponentRef_descriptor(unittest.TestCase):
@@ -66,6 +67,40 @@ class Test_ComponentRef_descriptor(unittest.TestCase):
         a.r = ref2
         self.assertEqual(ref.ref, A.r.ref)
         self.assertEqual(ref2.ref, a.r.ref)
+
+class Test_ComponentRef_resolve(unittest.TestCase):
+    def test_componentconfig(self):
+        cc = mock.Mock(component.ComponentConfig)
+        ref = component.ComponentRef(cc)
+        self.assertEqual(ref.resolve(), cc)
+
+    def test_import(self):
+        import sys
+        cc = mock.Mock(component.ComponentConfig)
+        mod = mock.Mock()
+        mod.config = cc
+        sys.modules['__test_component_ref'] = mod
+        ref = component.ComponentRef('__test_component_ref.config')
+        try:
+            self.assertEqual(ref.resolve(), cc)
+            self.assertEqual(ref.ref, cc)
+        finally:
+            del sys.modules['__test_component_ref']
+
+    def test_registry_direct(self):
+        cc = mock.Mock(component.ComponentConfig)
+        reg = dict(component=cc)
+        ref = component.ComponentRef("component", reg=reg)
+        self.assertEqual(ref.resolve(), cc)
+        self.assertEqual(ref.ref, cc)
+
+    def test_registry_ref(self):
+        cc = mock.Mock(component.ComponentConfig)
+        directref = component.ComponentRef(cc)
+        reg = dict(component=directref)
+        ref = component.ComponentRef("component", reg=reg)
+        self.assertEqual(ref.resolve(), cc)
+        self.assertEqual(ref.ref, cc)
 
 if __name__ == '__main__':
     unittest.main()

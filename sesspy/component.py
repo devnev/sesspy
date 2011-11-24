@@ -25,7 +25,7 @@ class ComponentError(Exception):
     pass
 
 class ComponentRef(object):
-    def __init__(self, ref, obj, reg=None):
+    def __init__(self, ref, obj=None, reg=None):
         self.ref = ref
         self.obj = obj
         if reg is None:
