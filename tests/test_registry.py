@@ -34,7 +34,7 @@ import unittest
 import mock
 from sesspy import registry, component
 
-class Test_ComponentRef_descriptor(unittest.TestCase):
+class Test_Registry(unittest.TestCase):
     def test_register_config(self):
         config = mock.Mock(component.ComponentConfig)
         reg = registry.ComponentRegistry()
