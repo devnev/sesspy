@@ -16,9 +16,13 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with sesspy.  If not, see <http://www.gnu.org/licenses/>.
 
-from __future__ import absolute_import
+from __future__ import absolute_import, with_statement
 
-from threading import RLock, current_thread
+from threading import RLock
+try:
+    from threading import current_thread
+except ImportError:
+    from threading import currentThread
 
 class Local(object):
     __slots__ = '_local__key', '_local__lock'
