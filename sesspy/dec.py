@@ -32,7 +32,8 @@ class ComponentInjector(object):
                 setattr(self, attr, getattr(func, attr))
             self.__dict__.update(getattr(func, '__dict__', {}))
         self.func = func
-        if not isinstance(ref, ComponentRef):
+        # XXX: maybe check for "resolve" method instead?
+        if not callable(ref):
             ref = ComponentRef(ref)
         self.ref = ref
         self.arg_kw = arg_kw
@@ -57,8 +58,10 @@ class ComponentInjector(object):
     def __get__(self, obj, owner=None):
         if hasattr(self.func, '__get__'):
             # when accessing methods, return new instance with bound method
-            return self.copy(func=self.func.__get__(obj, owner),
-                             ref=self.ref.__get__(obj, owner))
+            kwargs = dict(func=self.func.__get__(obj, owner))
+            if hasattr(self.ref, '__get__'):
+                kwargs['ref'] = self.ref.__get__(obj, owner)
+            return self.copy(**kwargs)
         else:
             return self
 
