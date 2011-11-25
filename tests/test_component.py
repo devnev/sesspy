@@ -38,21 +38,21 @@ from sesspy import component
 
 class Test_ComponentRef_descriptor(unittest.TestCase):
     def test_clsget(self):
-        ref = component.ComponentRef("component", None, None)
+        ref = component.ComponentRef("component")
         class A(object):
             r = ref
         self.assertEqual(ref.ref, A.r.ref)
 
     def test_objget(self):
-        ref = component.ComponentRef("component", None, None)
+        ref = component.ComponentRef("component")
         class A(object):
             r = ref
         a = A()
         self.assertEqual(ref.ref, a.r.ref)
 
     def test_clsset(self):
-        ref = component.ComponentRef("component", None, None)
-        ref2 = component.ComponentRef("component2", None, None)
+        ref = component.ComponentRef("component")
+        ref2 = component.ComponentRef("component2")
         class A(object):
             r = ref
         a = A()
@@ -61,8 +61,8 @@ class Test_ComponentRef_descriptor(unittest.TestCase):
         self.assertEqual(ref2.ref, a.r.ref)
 
     def test_objset(self):
-        ref = component.ComponentRef("component", None, None)
-        ref2 = component.ComponentRef("component2", None, None)
+        ref = component.ComponentRef("component")
+        ref2 = component.ComponentRef("component2")
         class A(object):
             r = ref
         a = A()

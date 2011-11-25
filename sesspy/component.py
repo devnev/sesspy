@@ -30,8 +30,9 @@ class ComponentError(Exception):
     pass
 
 class ComponentRef(object):
-    def __init__(self, ref, obj=None, reg=None):
+    def __init__(self, ref, name=None, obj=None, reg=None):
         self.ref = ref
+        self.name = name
         self.obj = obj
         if reg is None:
             from .registry import default_registry
@@ -46,30 +47,50 @@ class ComponentRef(object):
 
     @property
     def dictkey(self):
-        return '_%s__%s__%s' % (
+        return self.name or '_%s__%s__%s' % (
             __name__.replace('.', '__'),
             self.__class__.__name__,
             id(self),
         )
 
-    def __get__(self, obj, type=None):
-        if obj is not None:
+    def __get__(self, obj, type):
+        if obj is None:
+            return self
+        elif hasattr(obj, '__slots__'):
+            # handle types with __slots__: self.name must refer to another slot
+            if not self.name:
+                return self
+            elif getattr(type, self.name, None) is self:
+                raise TypeError("ComponentRef slot name %s refers to itself" % self.name)
+            else:
+                return getattr(obj, self.name, self)
+        else:
+            # otherwise try and get instance from __dict__, fall back to self
             try:
                 d = obj.__dict__
             except AttributeError:
-                pass
+                return self
             else:
                 return d.get(self.dictkey, self)
-        return self
 
     def __set__(self, obj, ref):
-        if obj is None:
-            self.ref = ref
+        # convert ref to ComponentRef and bind to obj
+        if isinstance(ref, ComponentRef):
+            ref = ref.copy(obj=obj)
         else:
-            if isinstance(ref, ComponentRef):
-                ref = ref.copy(obj=obj)
+            ref = self.copy(ref=ref, obj=obj)
+
+        # set new ref on obj
+        if hasattr(obj, '__slots__'):
+            # handle types with __slots__: self.name must refer to another slot
+            if not self.name:
+                raise TypeError("No slot name set for slotted ComponentRef owner")
+            elif getattr(type, self.name, None) is self:
+                raise TypeError("ComponentRef slot name %s refers to itself" % self.name)
             else:
-                ref = self.copy(ref=ref, obj=obj)
+                setattr(obj, self.name, ref)
+        else:
+            # otherwise add to obj's __dict__
             obj.__dict__[self.dictkey] = ref
 
     def resolve(self, obj=None):
