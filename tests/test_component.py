@@ -207,8 +207,10 @@ class Test_ComponentConfig_context(unittest.TestCase):
         ctx = c.local_context()
         with ctx as o:
             self.assertEqual(o, self.obj)
-        self.assertEqual(self.opener.method_calls,
-                         [('open',), ('commit', (self.obj,))])
+        self.assertEqual(self.opener.method_calls, [
+            ('open', (), {}),
+            ('commit', (self.obj,), {}),
+        ])
 
     def test_global_factory(self):
         c = component.ComponentConfig(global_opener_factory=self.factory)
@@ -218,8 +220,10 @@ class Test_ComponentConfig_context(unittest.TestCase):
 
         with ctx as o:
             self.assertEqual(o, self.obj)
-        self.assertEqual(self.opener.method_calls,
-                         [('open',), ('commit', (self.obj,))])
+        self.assertEqual(self.opener.method_calls, [
+            ('open', (), {}),
+            ('commit', (self.obj,), {}),
+        ])
 
         ctx = c.local_context()
         self.assertEqual(self.factory.call_count, 1)
@@ -250,9 +254,11 @@ class Test_ComponentConfig_localcontext(unittest.TestCase):
         with c.local_context() as o:
             self.assertEqual(o, self.obj)
             self.assertEqual(self.opener.method_calls,
-                             [('open',)])
-        self.assertEqual(self.opener.method_calls,
-                         [('open',), ('commit', (self.obj,))])
+                             [('open', (), {})])
+        self.assertEqual(self.opener.method_calls, [
+            ('open', (), {}),
+            ('commit', (self.obj,), {}),
+        ])
 
     def test_opener_is_created_once_locally(self):
         c = component.ComponentConfig(local_opener_factory=self.factory)

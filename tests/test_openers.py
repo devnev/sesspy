@@ -150,19 +150,19 @@ class Test_CountingOpener(unittest.TestCase):
         for x in combination:
             if x == 'o':
                 if count == 0:
-                    method_calls.append(('open',))
+                    method_calls.append(('open', (), {}))
                 count += 1
                 self.assertEqual(opener.open(), instance)
             elif x == 'c':
                 opener.commit(instance)
                 count -= 1
                 if count == 0:
-                    method_calls.append(('commit', (instance,)))
+                    method_calls.append(('commit', (instance,), {}))
             elif x == 'a':
                 opener.abort(instance)
                 count -= 1
                 if count == 0:
-                    method_calls.append(('abort', (instance,)))
+                    method_calls.append(('abort', (instance,), {}))
             self.assertEqual(instance_opener.method_calls, method_calls)
 
         self.assertEqual(instance.call_count, 0)

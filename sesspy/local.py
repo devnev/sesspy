@@ -22,7 +22,7 @@ from threading import RLock
 try:
     from threading import current_thread
 except ImportError:
-    from threading import currentThread
+    from threading import currentThread as current_thread
 
 class Local(object):
     __slots__ = '_local__key', '_local__lock'
