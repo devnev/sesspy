@@ -169,7 +169,7 @@ class Test_CountingOpener(unittest.TestCase):
         self.assertEqual(instance.method_calls, [])
 
         if expect is not None:
-            expect = map(dict(o='open',c='commit',a='abort').get, expect)
+            expect = list(map(dict(o='open',c='commit',a='abort').get, expect))
             calls = [m[0] for m in instance_opener.method_calls]
             self.assertEqual(expect, calls)
 

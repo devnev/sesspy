@@ -9,5 +9,5 @@ then
 	done
 	coverage html --include='sesspy/*'
 else
-	find tests -name '*.py' | tr / . | sed 's/\.py$//' | xargs python -m unittest
+	find tests -name '*.py' | tr / . | sed 's/\.py$//' | xargs ${PYTHON:-python} -m unittest
 fi
