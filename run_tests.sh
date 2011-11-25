@@ -9,5 +9,10 @@ then
 	done
 	coverage html --include='sesspy/*'
 else
-	find tests -name '*.py' | tr / . | sed 's/\.py$//' | xargs ${PYTHON:-python} -m unittest "$@"
+	PYTHON=${PYTHON:-python}
+	case "`${PYTHON} --version 2>&1 | sed 's/Python //'`" in
+		2.5*|2.6*) find tests -name 'test_*.py' | xargs -n1 -I "{}" ${PYTHON} "{}" "$@" ;;
+		2.7*|3.*) find tests -name 'test_*.py' | tr / . | sed 's/\.py$//' | xargs ${PYTHON} -m unittest "$@" ;;
+		*) echo Unsupported python version && exit 1 ;;
+	esac
 fi
