@@ -54,10 +54,11 @@ class ComponentInjector(object):
             id(self),
         )
 
-    def __get__(self, obj, type=None):
+    def __get__(self, obj, owner=None):
         if hasattr(self.func, '__get__'):
             # when accessing methods, return new instance with bound method
-            return self.copy(func=self.func.__get__(obj, type))
+            return self.copy(func=self.func.__get__(obj, owner),
+                             ref=self.ref.__get__(obj, owner))
         else:
             return self
 

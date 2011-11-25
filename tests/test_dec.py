@@ -117,6 +117,8 @@ class Test_MethodDec(unittest.TestCase):
         ctx.__exit__ = mock.Mock()
         ctx.__exit__.return_value = None
         ref = mock.Mock(spec=component.ComponentRef)
+        ref.__get__ = mock.Mock()
+        ref.__get__.return_value = ref
         ref.return_value = ctx
 
         class C(object):
@@ -132,6 +134,62 @@ class Test_MethodDec(unittest.TestCase):
         self.assertEqual(func.called, False)
         self.assertEqual(bound.call_args_list, [
             ((), {'component':comp})
+        ])
+        self.assertEqual(ctx.__enter__.call_args_list, [
+            ((), {}),
+        ])
+        self.assertEqual(ctx.__exit__.call_args_list, [
+            ((None, None, None), {}),
+        ])
+
+    def test_func_called_with_object_ctx(self):
+        func = mock.Mock(spec=['__name__','__doc__','__module__','__get__'])
+        func.__name__ = 'func'
+        func.__doc__ = 'doc'
+        func.__module__ = __name__
+        func.__get__ = mock.Mock()
+        bound = mock.Mock(spec=['__name__','__doc__','__module__'], name='bound')
+        bound.__name__ = 'func'
+        bound.__doc__ = 'doc'
+        bound.__module__ = __name__
+        func.__get__.return_value = bound
+        ret = mock.Mock()
+        func.return_value = ret
+        bound.return_value = ret
+
+        comp = mock.Mock()
+        ctx = mock.Mock(spec=component.LocalContext)
+        ctx.__enter__ = mock.Mock()
+        ctx.__enter__.return_value = comp
+        ctx.__exit__ = mock.Mock()
+        ctx.__exit__.return_value = None
+        conf = mock.Mock(spec=component.ComponentConfig)
+        conf.local_context.return_value = ctx
+        conf2 = mock.Mock(spec=component.ComponentConfig)
+        conf2.local_context.return_value = ctx
+        ref = component.ComponentRef(conf)
+
+        class C(object):
+            cref = ref
+            method = dec.ComponentInjector(cref, func, 'component')
+
+        c = C()
+        self.assertEqual(func.__get__.called, False)
+
+        c.cref = conf2
+
+        m = c.method
+        self.assertEqual(func.__get__.called, True)
+
+        r = m()
+        self.assertEqual(r, ret)
+        self.assertEqual(func.called, False)
+        self.assertEqual(bound.call_args_list, [
+            ((), {'component':comp})
+        ])
+        self.assertEqual(conf.local_context.called, False)
+        self.assertEqual(conf2.local_context.call_args_list, [
+            ((), {}),
         ])
         self.assertEqual(ctx.__enter__.call_args_list, [
             ((), {}),
