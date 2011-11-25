@@ -64,7 +64,7 @@ class CountingOpener(object):
     def commit(self, instance):
         assert self.instance is not None
         assert self.instance is instance
-        assert self.count > 1
+        assert self.count > 0
         self.count -= 1
         if self.count == 0:
             self.instance_opener.commit(self.instance)
@@ -73,7 +73,7 @@ class CountingOpener(object):
     def abort(self, instance):
         assert self.instance is not None
         assert self.instance is instance
-        assert self.count > 1
+        assert self.count > 0
         self.count -= 1
         if self.count == 0:
             self.instance_opener.abort(self.instance)
