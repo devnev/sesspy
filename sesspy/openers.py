@@ -32,6 +32,19 @@ class SingletonOpener(object):
     def abort(self, component):
         pass
 
+class FactoryOpener(object):
+    def __init___(self, factory):
+        self.factory = factory
+
+    def open(self):
+        return self.factory()
+
+    def commit(self, component):
+        pass
+
+    def abort(self, component):
+        pass
+
 class FunctionOpener(object):
 
     def __init__(self, open_fn, commit_fn=None, abort_fn=None):
