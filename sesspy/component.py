@@ -61,7 +61,8 @@ class ComponentRef(object):
             if not self.name:
                 return self
             elif getattr(type, self.name, None) is self:
-                raise TypeError("ComponentRef slot name %s refers to itself" % self.name)
+                # avoid recursion
+                return self
             else:
                 return getattr(obj, self.name, self)
         else:
@@ -84,9 +85,10 @@ class ComponentRef(object):
         if hasattr(obj, '__slots__'):
             # handle types with __slots__: self.name must refer to another slot
             if not self.name:
-                raise TypeError("No slot name set for slotted ComponentRef owner")
-            elif getattr(type, self.name, None) is self:
-                raise TypeError("ComponentRef slot name %s refers to itself" % self.name)
+                raise AttributeError("ComponentRef is read-only")
+            elif getattr(type(obj), self.name, None) is self:
+                # avoid recursion
+                raise AttributeError("ComponentRef is read-only")
             else:
                 setattr(obj, self.name, ref)
         else:

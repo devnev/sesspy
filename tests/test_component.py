@@ -70,6 +70,83 @@ class Test_ComponentRef_descriptor(unittest.TestCase):
         self.assertEqual(ref.ref, A.r.ref)
         self.assertEqual(ref2.ref, a.r.ref)
 
+class Test_ComponentRef_descriptor_slots(unittest.TestCase):
+    def setUp(self):
+        import sys
+        self.oldreclimit = sys.getrecursionlimit()
+        sys.setrecursionlimit(60)
+
+    def tearDown(self):
+        import sys
+        sys.setrecursionlimit(self.oldreclimit)
+
+    def test_clsget(self):
+        ref = component.ComponentRef("component", name="r")
+        class A(object):
+            __slots__ = ('r',)
+            r = ref
+        self.assertEqual(ref.ref, A.r.ref)
+        ref2 = component.ComponentRef("component2", name="s")
+        A.r = ref2
+        self.assertEqual(ref2.ref, A.r.ref)
+
+    def test_objget_selfname(self):
+        ref = component.ComponentRef("component", name="r")
+        class A(object):
+            __slots__ = ('r',)
+            r = ref
+        a = A()
+        self.assertEqual(a.r.ref, ref.ref)
+
+    def test_objget_badname(self):
+        ref = component.ComponentRef("component", name="s")
+        class A(object):
+            __slots__ = ('r',)
+            r = ref
+        a = A()
+        self.assertEqual(ref.ref, a.r.ref)
+
+    def test_objget_goodname(self):
+        ref = component.ComponentRef("component", name="s")
+        class A(object):
+            __slots__ = ('r', 's')
+            r = ref
+        a = A()
+        self.assertEqual(ref.ref, a.r.ref)
+
+    def test_objset_selfname(self):
+        ref = component.ComponentRef("component", name='r')
+        ref2 = component.ComponentRef("component2")
+        class A(object):
+            __slots__ = ('r',)
+            r = ref
+        a = A()
+        def assign():
+            a.r = ref2
+        self.assertRaises(AttributeError, assign)
+
+    def test_objset_badname(self):
+        ref = component.ComponentRef("component", name='s')
+        ref2 = component.ComponentRef("component2")
+        class A(object):
+            __slots__ = ('r',)
+            r = ref
+        a = A()
+        def assign():
+            a.r = ref2
+        self.assertRaises(AttributeError, assign)
+
+    def test_objset_goodname(self):
+        ref = component.ComponentRef("component", name='s')
+        ref2 = component.ComponentRef("component2")
+        class A(object):
+            __slots__ = ('r','s')
+            r = ref
+        a = A()
+        a.r = ref2
+        self.assertEqual(A.r.ref, ref.ref)
+        self.assertEqual(a.r.ref, ref2.ref)
+
 class Test_ComponentRef_resolve(unittest.TestCase):
     def test_componentconfig(self):
         cc = mock.Mock(component.ComponentConfig)
