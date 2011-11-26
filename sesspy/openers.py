@@ -18,6 +18,8 @@
 
 from __future__ import absolute_import
 
+import warnings
+
 class SingletonOpener(object):
 
     def __init__(self, instance):
@@ -34,9 +36,9 @@ class SingletonOpener(object):
 
 class FunctionOpener(object):
 
-    def __init__(self, open_fn, commit_fn=None, abort_fn=None):
-        self.open_fn, self.commit_fn, self.abort_fn = \
-                open_fn, commit_fn, abort_fn
+    def __init__(self, open_fn, commit_fn=None, abort_fn=None, close_fn=None):
+        self.open_fn, self.close_fn = open_fn, close_fn
+        self.commit_fn, self.abort_fn = commit_fn, abort_fn
 
     def open(self):
         return self.open_fn()
@@ -49,8 +51,14 @@ class FunctionOpener(object):
         if self.abort_fn is not None:
             self.abort_fn(session)
 
-class CountingOpener(object):
+    def close(self):
+        if self.close_fn is not None:
+            self.close_fn()
+
+class CountingOpenerBase(object):
     def __init__(self, session_opener):
+        assert not issubclass(CountingOpenerBase, type(self)), \
+                "CountingOpenerBase is abstract"
         self.session_opener = session_opener
         self.count = 0
         self.session = None
@@ -62,28 +70,60 @@ class CountingOpener(object):
         return self.session
 
     def commit(self, session):
-        assert self.session is not None
-        assert self.session is session
-        assert self.count > 0
+        if self.count <= 0:
+            warnings.warn("Got commit for session with count %d <= 0" % self.count)
+        if session is not self.session:
+            warnings.warn("Got commit for unrecognized session %r (instead of %r)" %
+                        session, self.session)
         self.count -= 1
+
+    def abort(self, session):
+        if self.count <= 0:
+            warnings.warn("Got abort for session with count %d <= 0" % self.count)
+        if session is not self.session:
+            warnings.warn("Got abort for unrecognized session %r (instead of %r)" %
+                        session, self.session)
+        self.count -= 1
+
+class CountingOpener(CountingOpenerBase):
+    def __init__(self, session_opener):
+        super(CountingOpener, self).__init__(session_opener)
+
+    def commit(self, session):
+        super(CountingOpener, self).commit(session)
         if self.count == 0:
             self.session_opener.commit(self.session)
             self.session = None
 
     def abort(self, session):
-        assert self.session is not None
-        assert self.session is session
-        assert self.count > 0
-        self.count -= 1
+        super(CountingOpener, self).abort(session)
         if self.count == 0:
             self.session_opener.abort(self.session)
             self.session = None
 
     def close(self):
-        if self.count > 1:
+        if self.count > 0:
+            warnings.warn("Closing in-use session")
             self.session_opener.abort(self.session)
             self.session = None
-            self.count = 0
+
+class LazyCountingOpener(CountingOpenerBase):
+    def __init__(self, session_opener):
+        super(LazyCountingOpener, self).__init__(session_opener)
+
+    def abort(self, session):
+        super(CountingOpener, self).abort(session)
+        if self.count == 0:
+            self.session_opener.abort(self.session)
+            self.session = None
+
+    def close(self):
+        if self.count > 0:
+            warnings.warn("Closing in-use session")
+            self.session_opener.abort(self.session)
+        elif self.session is not None:
+            self.session_opener.commit(self.session)
+        self.session = None
 
 def combine_openers(*openers):
     def factory(start):

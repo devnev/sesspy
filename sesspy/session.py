@@ -74,7 +74,7 @@ class LocalOpeners(object):
                 except Exception:
                     e = sys.exc_info()[1]
                     warnings.warn("An exception was raised while closing openers: " + str(e))
-                del self.openers.__dict__[cid]
+            del self.openers.__dict__[cid]
 
     def clear(self):
         self.openers.__dict__.clear()
