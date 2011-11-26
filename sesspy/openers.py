@@ -26,23 +26,10 @@ class SingletonOpener(object):
     def open(self):
         return self.instance
 
-    def commit(self, component):
+    def commit(self, instance):
         pass
 
-    def abort(self, component):
-        pass
-
-class FactoryOpener(object):
-    def __init___(self, factory):
-        self.factory = factory
-
-    def open(self):
-        return self.factory()
-
-    def commit(self, component):
-        pass
-
-    def abort(self, component):
+    def abort(self, instance):
         pass
 
 class FunctionOpener(object):
@@ -54,41 +41,53 @@ class FunctionOpener(object):
     def open(self):
         return self.open_fn()
 
-    def commit(self, component):
+    def commit(self, session):
         if self.commit_fn is not None:
-            self.commit_fn(component)
+            self.commit_fn(session)
 
-    def abort(self, component):
+    def abort(self, session):
         if self.abort_fn is not None:
-            self.abort_fn(component)
+            self.abort_fn(session)
 
 class CountingOpener(object):
-    def __init__(self, instance_opener):
-        self.instance_opener = instance_opener
+    def __init__(self, session_opener):
+        self.session_opener = session_opener
         self.count = 0
-        self.instance = None
+        self.session = None
 
     def open(self):
-        if self.instance is None:
-            self.instance = self.instance_opener.open()
+        if self.session is None:
+            self.session = self.session_opener.open()
         self.count += 1
-        return self.instance
+        return self.session
 
-    def commit(self, instance):
-        assert self.instance is not None
-        assert self.instance is instance
+    def commit(self, session):
+        assert self.session is not None
+        assert self.session is session
         assert self.count > 0
         self.count -= 1
         if self.count == 0:
-            self.instance_opener.commit(self.instance)
-            self.instance = None
+            self.session_opener.commit(self.session)
+            self.session = None
 
-    def abort(self, instance):
-        assert self.instance is not None
-        assert self.instance is instance
+    def abort(self, session):
+        assert self.session is not None
+        assert self.session is session
         assert self.count > 0
         self.count -= 1
         if self.count == 0:
-            self.instance_opener.abort(self.instance)
-            self.instance = None
+            self.session_opener.abort(self.session)
+            self.session = None
 
+    def close(self):
+        if self.count > 1:
+            self.session_opener.abort(self.session)
+            self.session = None
+            self.count = 0
+
+def combine_openers(*openers):
+    def factory(start):
+        for opener in openers:
+            start = opener(start)
+        return start
+    return factory

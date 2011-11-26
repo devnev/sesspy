@@ -34,7 +34,7 @@ if __name__ == '__main__':
 
 import unittest
 import mock
-from sesspy import registry, component
+from sesspy import registry, ref
 
 class Test_Registry(unittest.TestCase):
     def test_register_config(self):
@@ -67,8 +67,8 @@ class Test_Registry(unittest.TestCase):
         obj = mock.Mock()
         reg = registry.ComponentRegistry()
         reg.register_singleton("obj", obj)
-        ref = reg["obj"]
-        with ref() as o:
+        cref = reg["obj"]
+        with cref() as o:
             self.assertEqual(o, obj)
 
 if __name__ == '__main__':

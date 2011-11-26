@@ -23,10 +23,7 @@ try:
 except NameError:
     str_ = str
 
-class ResolveError(ValueError):
-    pass
-
-class ComponentError(Exception):
+class ResolveError(LookupError):
     pass
 
 class ComponentRef(object):
@@ -99,76 +96,39 @@ class ComponentRef(object):
         if obj is not None and obj is not self.obj:
             return self.__get__(obj).resolve()
 
-        if hasattr(self.ref, 'local_context'):
+        if callable(self.ref):
             resolved = self.ref
         elif isinstance(self.ref, str_) and '.' in self.ref:
-            _imp, _from = self.ref.rsplit('.', 1)
-            _temp = __import__(_imp, fromlist=[_from])
-            resolved = getattr(_temp, _from)
+            try:
+                _imp, _from = self.ref.rsplit('.', 1)
+                _temp = __import__(_imp, fromlist=[_from])
+                resolved = getattr(_temp, _from)
+            except Exception as e:
+                import sys
+                e = ResolveError("Failed to import ref %r: %s"
+                                 % (self.ref, e))
+                raise e, None, sys.exc_info()[2]
         elif isinstance(self.ref, str_) and self.reg is not None:
-            resolved = self.reg[self.ref]
+            try:
+                resolved = self.reg[self.ref]
+            except KeyError as e:
+                import sys
+                e = ResolveError("Failed to lookup ref %r: %s"
+                                 % (self.ref, e))
+                raise e, None, sys.exc_info()[2]
             if hasattr(resolved, 'resolve'):
+                # in case of reference-to-reference, try "transitive" resolve
                 resolved = resolved.resolve()
         else:
             resolved = None
 
-        if not hasattr(resolved, 'local_context'):
-            raise ResolveError("Component ref %r does not resolve to component config" % self.ref)
+        if not callable(resolved):
+            raise ResolveError("Component ref %r does not resolve to a session factory" % self.ref)
         self.ref = resolved
 
         return resolved
 
     def __call__(self):
-        return self.resolve().local_context()
+        session_factory = self.resolve()
+        return session_factory()
 
-class LocalContext(object):
-    def __init__(self, instance_opener):
-        self.instance_opener = instance_opener
-        self.instance = None
-
-    def __enter__(self):
-        self.instance = self.instance_opener.open()
-        return self.instance
-
-    def __exit__(self, exc, type, tb):
-        if exc is None:
-            self.instance_opener.commit(self.instance)
-        else:
-            self.instance_opener.abort(self.instance)
-
-class ComponentConfig(object):
-    def __init__(self, component=None, global_opener=None,
-                 global_opener_factory=None,
-                 local_opener_factory=None):
-        self.component = component
-        self.global_opener = global_opener
-        self.global_opener_factory = global_opener_factory
-        self.local_opener_factory = local_opener_factory
-        from .local import Local
-        self.locals = Local()
-
-    def local_context(self):
-        if self.global_opener is None and self.global_opener_factory is not None:
-            if self.component is not None:
-                self.global_opener = self.global_opener_factory(self.component)
-            else:
-                self.global_opener = self.global_opener_factory()
-
-        opener = getattr(self.locals, 'opener', None)
-        if opener is None and self.local_opener_factory is not None:
-            if self.global_opener is not None:
-                opener = self.local_opener_factory(self.global_opener)
-            if self.component is not None:
-                opener = self.local_opener_factory(self.component)
-            else:
-                opener = self.local_opener_factory()
-            self.locals.opener = opener
-        if opener is None and self.global_opener is not None:
-            opener = self.global_opener
-        if opener is None and self.component is not None:
-            from .openers import SingletonOpener
-            opener = SingletonOpener(self.component)
-        if opener is None:
-            raise ComponentError("Unable to create context for %r" % self)
-
-        return LocalContext(opener)

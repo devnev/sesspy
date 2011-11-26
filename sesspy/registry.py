@@ -18,7 +18,7 @@
 
 from __future__ import absolute_import
 
-from .component import ComponentConfig, ComponentRef
+from .ref import ComponentRef
 
 class DuplicateComponentError(Exception):
     pass
