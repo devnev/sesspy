@@ -18,6 +18,8 @@
 
 from __future__ import absolute_import
 
+import sys
+
 try:
     str_ = basestring
 except NameError:
@@ -103,16 +105,16 @@ class ComponentRef(object):
                 _imp, _from = self.ref.rsplit('.', 1)
                 _temp = __import__(_imp, fromlist=[_from])
                 resolved = getattr(_temp, _from)
-            except Exception as e:
-                import sys
+            except Exception:
+                e = sys.exc_info()[1]
                 e = ResolveError("Failed to import ref %r: %s"
                                  % (self.ref, e))
                 raise e, None, sys.exc_info()[2]
         elif isinstance(self.ref, str_) and self.reg is not None:
             try:
                 resolved = self.reg[self.ref]
-            except KeyError as e:
-                import sys
+            except KeyError:
+                e = sys.exc_info()[1]
                 e = ResolveError("Failed to lookup ref %r: %s"
                                  % (self.ref, e))
                 raise e, None, sys.exc_info()[2]

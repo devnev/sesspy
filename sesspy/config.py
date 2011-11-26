@@ -18,6 +18,7 @@
 
 from __future__ import absolute_import
 
+import sys
 try:
     import configparser
 except ImportError:
@@ -63,5 +64,5 @@ class ConfigOption(object):
         try:
             return config.get(self.section, self.option)
         except (configparser.NoSectionError,
-                configparser.NoOptionError) as e:
-            raise FeatureUnconfigured(str(e))
+                configparser.NoOptionError):
+            raise FeatureUnconfigured(str(sys.exc_info()[1]))

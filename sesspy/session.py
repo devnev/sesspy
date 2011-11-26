@@ -18,6 +18,7 @@
 
 from __future__ import absolute_import
 
+import sys
 import warnings
 
 class Session(object):
@@ -59,9 +60,8 @@ class LocalOpeners(object):
     def __getitem__(self, config):
         try:
             return getattr(self.openers, str(id(config)))
-        except AttributeError as e:
-            import sys
-            raise KeyError(str(e)), None, sys.exc_info()[2]
+        except AttributeError:
+            raise KeyError(str(sys.exc_info()[1])), None, sys.exc_info()[2]
 
     def __setitem__(self, config, opener):
         setattr(self.openers, str(id(config)), opener)
@@ -71,7 +71,8 @@ class LocalOpeners(object):
             if hasattr(opener, 'close'):
                 try:
                     opener.close()
-                except Exception as e:
+                except Exception:
+                    e = sys.exc_info()[1]
                     warnings.warn("An exception was raised while closing openers: " + str(e))
                 del self.openers.__dict__[cid]
 
@@ -148,8 +149,8 @@ class SingletonFactory(SessionFactoryBase):
         if self.noretry_exceptions is not None:
             try:
                 instance = self.factory(*args, **kwargs)
-            except self.noretry_exceptions as e:
-                self.exception = e
+            except self.noretry_exceptions:
+                self.exception = sys.exc_info()[1]
                 raise
         else:
             instance = self.factory(*args, **kwargs)
