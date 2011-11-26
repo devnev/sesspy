@@ -44,6 +44,13 @@ class Local(object):
         key = object.__getattribute__(self, '_local__key')
         d = current_thread().__dict__.get(key)
 
+        if d is not None:
+            # lookup up attribute
+            try:
+                return d[name]
+            except KeyError:
+                pass
+
         if name == '__dict__':
             # return attribute dict directly
             if d is None:
@@ -54,13 +61,6 @@ class Local(object):
                     if d is None:
                         current_thread().__dict__[key] = d = {}
             return d
-
-        if d is not None:
-            # lookup up attribute
-            try:
-                return d[name]
-            except KeyError:
-                pass
 
         raise AttributeError("Local has no attribute %r" % name)
 
