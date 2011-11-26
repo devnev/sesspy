@@ -36,11 +36,11 @@ class ConnectionFactory(object):
         return engine
 
 def db_connection(db_uri, engine_args=None, name=None, registry=None, noretry_exceptions=None, connection_factory=ConnectionFactory):
-    from . import session
+    from . import session, openers
 
     component = session.SingletonFactory(
-        factory=connection_factory(db_uri, **(engine_kwargs or {})),
-        instance_opener=SingletonOpener,
+        factory=connection_factory(db_uri, **(engine_args or {})),
+        instance_opener=openers.SingletonOpener,
         local_openers=False,
         noretry_exceptions=noretry_exceptions,
     )

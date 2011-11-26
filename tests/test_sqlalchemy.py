@@ -57,7 +57,69 @@ class Test_ConnectionFactory(unittest.TestCase):
         self.assertEqual(str(e.url), db_uri)
 
 class Test_DbConnection(unittest.TestCase):
-    pass
+
+    def test_creates_singletonfactory(self):
+        connection_factory_init = mock.Mock(spec=())
+        connection_factory = mock.Mock(spec=())
+        connection_factory_init.return_value = connection_factory
+        connection = mock.Mock(spec=())
+        connection_factory.return_value = connection
+        db_uri = '__test_uri'
+
+        component = sqlalchemy.db_connection(
+            db_uri, connection_factory=connection_factory_init,
+        )
+        self.assertEqual(connection_factory_init.call_args_list, [
+            ((db_uri,), {})
+        ])
+        self.assertEqual(connection_factory.called, False)
+
+        sess = component()
+        self.assertEqual(connection_factory_init.call_count, 1)
+        self.assertEqual(connection_factory.call_args_list, [
+            ((), {}),
+        ])
+
+        conn = sess.open()
+        self.assertEqual(conn, connection)
+        self.assertEqual(connection_factory_init.call_count, 1)
+        self.assertEqual(connection_factory.call_count, 1)
+
+        sess.commit()
+        self.assertEqual(connection_factory_init.call_count, 1)
+        self.assertEqual(connection_factory.call_count, 1)
+
+        conn = sess.open()
+        self.assertEqual(conn, connection)
+        self.assertEqual(connection_factory_init.call_count, 1)
+        self.assertEqual(connection_factory.call_count, 1)
+
+        sess.abort()
+        self.assertEqual(connection_factory_init.call_count, 1)
+        self.assertEqual(connection_factory.call_count, 1)
+
+    def test_registers_singletonfactory(self):
+        registry = mock.Mock(spec=['register_component'])
+        registry.register_component = mock.Mock(spec=())
+        connection_factory_init = mock.Mock(spec=())
+        connection_factory = mock.Mock(spec=())
+        connection_factory_init.return_value = connection_factory
+        connection = mock.Mock(spec=())
+        connection_factory.return_value = connection
+        db_uri = '__test_uri'
+        component_name = 'component1'
+
+        component = sqlalchemy.db_connection(
+            db_uri, name=component_name, registry=registry,
+            connection_factory=connection_factory_init,
+        )
+        self.assertEqual(connection_factory_init.call_args_list, [
+            ((db_uri,), {}),
+        ])
+        self.assertEqual(connection_factory.called, False)
+        self.assertEqual(registry.register_component.call_args_list, [
+            ((component_name, component), {}),
+        ])
 
 if __name__ == '__main__':
     unittest.main()
