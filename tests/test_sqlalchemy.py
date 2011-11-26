@@ -36,6 +36,26 @@ import unittest
 import mock
 from sesspy import sqlalchemy
 
+class Test_ConnectionFactory(unittest.TestCase):
+
+    def test_call_creates_engine(self):
+        db_uri = 'sqlite:///'
+        c = sqlalchemy.ConnectionFactory(db_uri)
+        e = c()
+        self.assertEqual(str(e.url), db_uri)
+
+    def test_callable_uri_is_called(self):
+        db_uri = 'sqlite:///'
+        m = mock.Mock(spec=())
+        m.return_value = db_uri
+        c = sqlalchemy.ConnectionFactory(m)
+        self.assertEqual(m.called, False)
+        e = c()
+        self.assertEqual(m.call_args_list, [
+            ((), {}),
+        ])
+        self.assertEqual(str(e.url), db_uri)
+
 class Test_DbConnection(unittest.TestCase):
     pass
 

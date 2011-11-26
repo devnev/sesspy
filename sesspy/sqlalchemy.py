@@ -32,14 +32,14 @@ class ConnectionFactory(object):
         if callable(db_uri):
             db_uri = db_uri()
 
-        engine = sqlalchemy.create_engine(db_uri, **self.engine_kwargs)
+        engine = create_engine(db_uri, **self.engine_kwargs)
         return engine
 
-def db_connection(db_uri, engine_args=None, name=None, registry=None, noretry_exceptions=None):
+def db_connection(db_uri, engine_args=None, name=None, registry=None, noretry_exceptions=None, connection_factory=ConnectionFactory):
     from . import session
 
     component = session.SingletonFactory(
-        factory=ConnectionFactory(db_uri, **(engine_kwargs or {})),
+        factory=connection_factory(db_uri, **(engine_kwargs or {})),
         instance_opener=SingletonOpener,
         local_openers=False,
         noretry_exceptions=noretry_exceptions,
