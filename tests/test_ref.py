@@ -185,5 +185,27 @@ class Test_ComponentRef_resolve(unittest.TestCase):
         self.assertEqual(ref1.resolve(), cc)
         self.assertEqual(ref1.ref, cc)
 
+    def test_registry_badref(self):
+        reg = dict()
+        ref1 = ref.ComponentRef("component2", reg=reg)
+        self.assertRaises(ref.ResolveError, ref1.resolve)
+
+    def test_badimport(self):
+        import sys
+        modname = '__test_component_ref'
+        mod = mock.Mock(spec=())
+        sys.modules[modname] = mod
+        try:
+            ref1 = ref.ComponentRef(modname+'.config')
+            self.assertRaises(ref.ResolveError, ref1.resolve)
+        finally:
+            del sys.modules[modname]
+
+    def test_badcomponent(self):
+        badcomp = object()
+        assert not callable(badcomp)
+        ref1 = ref.ComponentRef(badcomp)
+        self.assertRaises(ref.ResolveError, ref1.resolve)
+
 if __name__ == '__main__':
     unittest.main()
