@@ -32,7 +32,7 @@ if __name__ == '__main__':
 
 import unittest
 import mock
-from sesspy import dec, component
+from sesspy import dec, ref, session
 
 class Test_FunctionDec(unittest.TestCase):
     def test_func_called_with_ctx(self):
@@ -43,19 +43,19 @@ class Test_FunctionDec(unittest.TestCase):
         ret = mock.Mock()
         func.return_value = ret
 
-        comp = mock.Mock()
-        ctx = mock.Mock(spec=component.LocalContext)
+        comp = mock.Mock(spec=())
+        ctx = mock.Mock(spec=session.Session)
         ctx.__enter__ = mock.Mock()
         ctx.__enter__.return_value = comp
         ctx.__exit__ = mock.Mock()
         ctx.__exit__.return_value = None
-        ref = mock.Mock(spec=component.ComponentRef)
-        ref.return_value = ctx
+        cref = mock.Mock(spec=ref.ComponentRef)
+        cref.return_value = ctx
 
-        decf = dec.ComponentInjector(ref, func, 'component')
+        decf = dec.ComponentInjector(cref, func, 'component')
 
         self.assertEqual(decf(), ret)
-        self.assertTrue(ref.called)
+        self.assertTrue(cref.called)
         self.assertEqual(func.call_args_list, [
             ((), {'component':comp})
         ])
@@ -74,17 +74,17 @@ class Test_FunctionDec(unittest.TestCase):
         ret = mock.Mock()
         func.return_value = ret
 
-        comp = mock.Mock()
-        ctx = mock.Mock(spec=component.LocalContext)
+        comp = mock.Mock(spec=())
+        ctx = mock.Mock(spec=session.Session)
         ctx.__enter__ = mock.Mock()
         ctx.__enter__.return_value = comp
         ctx.__exit__ = mock.Mock()
         ctx.__exit__.return_value = None
-        ref = mock.Mock(spec=component.ComponentRef)
-        ref.return_value = ctx
+        cref = mock.Mock(spec=ref.ComponentRef)
+        cref.return_value = ctx
         comp2 = mock.Mock()
 
-        decf = dec.ComponentInjector(ref, func, 'component')
+        decf = dec.ComponentInjector(cref, func, 'component')
 
         self.assertEqual(decf(component=comp2), ret)
         self.assertEqual(func.call_args_list, [
@@ -110,19 +110,19 @@ class Test_MethodDec(unittest.TestCase):
         func.return_value = ret
         bound.return_value = ret
 
-        comp = mock.Mock()
-        ctx = mock.Mock(spec=component.LocalContext)
+        comp = mock.Mock(spec=())
+        ctx = mock.Mock(spec=session.Session)
         ctx.__enter__ = mock.Mock()
         ctx.__enter__.return_value = comp
         ctx.__exit__ = mock.Mock()
         ctx.__exit__.return_value = None
-        ref = mock.Mock(spec=component.ComponentRef)
-        ref.__get__ = mock.Mock()
-        ref.__get__.return_value = ref
-        ref.return_value = ctx
+        cref = mock.Mock(spec=ref.ComponentRef)
+        cref.__get__ = mock.Mock()
+        cref.__get__.return_value = cref
+        cref.return_value = ctx
 
         class C(object):
-            method = dec.ComponentInjector(ref, func, 'component')
+            method = dec.ComponentInjector(cref, func, 'component')
         c = C()
 
         self.assertEqual(func.__get__.called, False)
@@ -157,20 +157,20 @@ class Test_MethodDec(unittest.TestCase):
         func.return_value = ret
         bound.return_value = ret
 
-        comp = mock.Mock()
-        ctx = mock.Mock(spec=component.LocalContext)
+        comp = mock.Mock(spec=())
+        ctx = mock.Mock(spec=session.Session)
         ctx.__enter__ = mock.Mock()
         ctx.__enter__.return_value = comp
         ctx.__exit__ = mock.Mock()
         ctx.__exit__.return_value = None
-        conf = mock.Mock(spec=component.ComponentConfig)
-        conf.local_context.return_value = ctx
-        conf2 = mock.Mock(spec=component.ComponentConfig)
-        conf2.local_context.return_value = ctx
-        ref = component.ComponentRef(conf)
+        conf = mock.Mock(spec=())
+        conf.return_value = ctx
+        conf2 = mock.Mock(spec=())
+        conf2.return_value = ctx
+        ref1 = ref.ComponentRef(conf)
 
         class C(object):
-            cref = ref
+            cref = ref1
             method = dec.ComponentInjector(cref, func, 'component')
 
         c = C()
@@ -187,8 +187,8 @@ class Test_MethodDec(unittest.TestCase):
         self.assertEqual(bound.call_args_list, [
             ((), {'component':comp})
         ])
-        self.assertEqual(conf.local_context.called, False)
-        self.assertEqual(conf2.local_context.call_args_list, [
+        self.assertEqual(conf.called, False)
+        self.assertEqual(conf2.call_args_list, [
             ((), {}),
         ])
         self.assertEqual(ctx.__enter__.call_args_list, [
@@ -203,26 +203,26 @@ class Test_DecHelper(unittest.TestCase):
         inj = mock.Mock()
         ret = mock.Mock()
         inj.return_value = ret
-        ref = mock.Mock()
+        cref = mock.Mock()
         func = mock.Mock()
 
-        res = dec.with_component(ref, "component", inj)(func)
+        res = dec.with_component(cref, "component", inj)(func)
         self.assertEqual(res, ret)
         self.assertEqual(inj.call_args_list, [
-            ((ref, func, "component"), {}),
+            ((cref, func, "component"), {}),
         ])
 
     def test_builds_injector_refkw(self):
         inj = mock.Mock()
         ret = mock.Mock()
         inj.return_value = ret
-        ref = "__test_ref"
+        cref = "__test_ref"
         func = mock.Mock()
 
-        res = dec.with_component(ref, None, inj)(func)
+        res = dec.with_component(cref, None, inj)(func)
         self.assertEqual(res, ret)
         self.assertEqual(inj.call_args_list, [
-            ((ref, func, ref), {}),
+            ((cref, func, cref), {}),
         ])
 
 if __name__ == '__main__':

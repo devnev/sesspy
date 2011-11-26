@@ -33,26 +33,8 @@ class ComponentRegistry(object):
         self.configs[name] = config
         return config
 
-    def register_factory(self, name, opener_factory):
-        config = ComponentConfig(local_opener_factory=opener_factory)
-        return self.register_component(name, config)
-
-    def register_session(self, name, session_opener):
-        from . import openers
-        config = ComponentConfig(
-            global_opener=session_opener,
-            local_opener_factory=openers.CountingOpener,
-        )
-        return self.register_component(name, config)
-
-    def register_singleton(self, name, instance):
-        config = ComponentConfig(
-            component=instance,
-        )
-        return self.register_component(name, config)
-
     def __getitem__(self, name):
-        return ComponentRef(self.configs[name])
+        return ComponentRef(self.configs[name], reg=self)
 
     def get(self, name):
         return ComponentRef(name, reg=self)

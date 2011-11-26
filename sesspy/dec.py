@@ -18,7 +18,7 @@
 
 from __future__ import absolute_import, with_statement
 
-from .component import ComponentRef
+from .ref import ComponentRef
 
 try:
     str_ = basestring

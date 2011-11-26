@@ -34,42 +34,24 @@ if __name__ == '__main__':
 
 import unittest
 import mock
-from sesspy import registry, ref
+from sesspy import registry, ref, session
 
 class Test_Registry(unittest.TestCase):
     def test_register_config(self):
-        config = mock.Mock(component.ComponentConfig)
+        config = mock.Mock(spec=())
         reg = registry.ComponentRegistry()
         reg.register_component("component", config)
         self.assertEqual(reg["component"].ref, config)
 
     def test_register_duplicate_config(self):
-        config = mock.Mock(component.ComponentConfig)
-        config2 = mock.Mock(component.ComponentConfig)
+        config = mock.Mock(spec=())
+        config2 = mock.Mock(spec=())
         reg = registry.ComponentRegistry()
         reg.register_component("component", config)
         self.assertRaises(registry.DuplicateComponentError,
                           reg.register_component,
                           "component", config2)
         self.assertEqual(reg["component"].ref, config)
-
-    def test_register_altmethods(self):
-        obj = mock.Mock()
-        reg = registry.ComponentRegistry()
-        reg.register_factory("factory", obj)
-        self.assertTrue(reg["factory"])
-        reg.register_session("session", obj)
-        self.assertTrue(reg["session"])
-        reg.register_singleton("singleton", obj)
-        self.assertTrue(reg["singleton"])
-
-    def test_register_singleton(self):
-        obj = mock.Mock()
-        reg = registry.ComponentRegistry()
-        reg.register_singleton("obj", obj)
-        cref = reg["obj"]
-        with cref() as o:
-            self.assertEqual(o, obj)
 
 if __name__ == '__main__':
     unittest.main()
