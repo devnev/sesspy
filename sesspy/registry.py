@@ -25,16 +25,16 @@ class DuplicateComponentError(Exception):
 
 class ComponentRegistry(object):
     def __init__(self):
-        self.configs = {}
+        self.components = {}
 
-    def register_component(self, name, config):
-        if name in self.configs:
+    def register_component(self, name, component):
+        if name in self.components:
             raise DuplicateComponentError("Component with name %s already registered" % name)
-        self.configs[name] = config
-        return config
+        self.components[name] = component
+        return component
 
     def __getitem__(self, name):
-        return ComponentRef(self.configs[name], reg=self)
+        return ComponentRef(self.components[name], reg=self)
 
     def get(self, name):
         return ComponentRef(name, reg=self)
