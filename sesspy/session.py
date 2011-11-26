@@ -172,4 +172,4 @@ class SingletonFactory(SessionFactoryBase):
             return self.instance
 
     def create_opener(self):
-        return self.opener_factory(self.get())
+        return self.instance_opener(self.get())
