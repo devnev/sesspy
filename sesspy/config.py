@@ -53,7 +53,7 @@ class LazyConfigReader(object):
             self.read_paths = self.read()
             return self.config
 
-ConfigOption(object):
+class ConfigOption(object):
     def __init__(self, get_config, section, option):
         self.get_config = get_config
         self.section, self.option = section, option
