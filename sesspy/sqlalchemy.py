@@ -72,13 +72,13 @@ class ORMSessionFactory(object):
     def abort(self, session):
         session.rollback()
 
-def orm_session(db_uri, engine_kwargs=None,
+def orm_session(db_uri, engine_args=None,
                 name=None, registry=None,
                 noretry_exceptions=None):
     from . import session
 
     component = session.SingletonFactory(
-        factory=ConnectionFactory(db_uri, **engine_kwargs),
+        factory=ConnectionFactory(db_uri, **engine_args),
         instance_opener=ORMSessionFactory,
         noretry_exceptions=noretry_exceptions,
     )
@@ -91,7 +91,7 @@ def orm_session(db_uri, engine_kwargs=None,
 
     return component
 
-def orm_counting_session(db_uri, engine_kwargs=None,
+def orm_counting_session(db_uri, engine_args=None,
                          name=None, registry=None,
                          noretry_exceptions=None,
                          counting_opener=None):
@@ -100,7 +100,7 @@ def orm_counting_session(db_uri, engine_kwargs=None,
         counting_opener = openers.CountingOpener
 
     component = session.SingletonFactory(
-        factory=ConnectionFactory(db_uri, **engine_kwargs),
+        factory=ConnectionFactory(db_uri, **engine_args),
         instance_opener=openers.combine_openers(
             ORMSessionFactory,
             counting_opener,
