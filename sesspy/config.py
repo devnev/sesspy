@@ -20,6 +20,7 @@ from __future__ import absolute_import, with_statement
 
 import sys
 import threading
+import codecs
 from .six.moves import configparser
 
 class FeatureUnconfigured(Exception):
@@ -34,11 +35,12 @@ class LazyConfigReader(object):
     load-time before the configuration is first read.
     """
 
-    def __init__(self, config, paths, expanduser=True, leaf=None):
+    def __init__(self, config, paths, expanduser=True, leaf=None, encoding=None):
         self.config = config
         self.paths = paths
         self.expanduser = expanduser
         self.leaf = leaf
+        self.encoding = encoding
         self.load_lock = threading.Lock()
         self.read_paths = None
 
@@ -50,7 +52,17 @@ class LazyConfigReader(object):
         if self.expanduser:
             paths = [os.path.expanduser(p) for p in paths]
         read_paths = self.read_paths or []
-        read_paths.extend(self.config.read(paths))
+        if self.encoding:
+            for path in paths:
+                try:
+                    f = codecs.open(path, 'r', self.encoding)
+                except IOError:
+                    continue
+                with f:
+                    self.config.readfp(f)
+                    read_paths.append(path)
+        else:
+            read_paths.extend(self.config.read(paths))
         self.read_paths = read_paths
 
     def __call__(self):
