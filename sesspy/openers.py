@@ -71,18 +71,20 @@ class CountingOpenerBase(object):
 
     def commit(self, session):
         if self.count <= 0:
-            warnings.warn("Got commit for session with count %d <= 0" % self.count)
+            warnings.warn("Got commit for session with count %d <= 0"
+                          % self.count)
         if session is not self.session:
-            warnings.warn("Got commit for unrecognized session %r (instead of %r)" %
-                        session, self.session)
+            warnings.warn("Got commit for unrecognized session %r (expected %r)"
+                          % (session, self.session))
         self.count -= 1
 
     def abort(self, session):
         if self.count <= 0:
-            warnings.warn("Got abort for session with count %d <= 0" % self.count)
+            warnings.warn("Got abort for session with count %d <= 0"
+                          % self.count)
         if session is not self.session:
-            warnings.warn("Got abort for unrecognized session %r (instead of %r)" %
-                        session, self.session)
+            warnings.warn("Got abort for unrecognized session %r (expected %r)"
+                          % (session, self.session))
         self.count -= 1
 
 class CountingOpener(CountingOpenerBase):
@@ -112,7 +114,7 @@ class LazyCountingOpener(CountingOpenerBase):
         super(LazyCountingOpener, self).__init__(session_opener)
 
     def abort(self, session):
-        super(CountingOpener, self).abort(session)
+        super(LazyCountingOpener, self).abort(session)
         if self.count == 0:
             self.session_opener.abort(self.session)
             self.session = None

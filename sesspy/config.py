@@ -26,6 +26,14 @@ class FeatureUnconfigured(Exception):
     pass
 
 class LazyConfigReader(object):
+    """
+    Helper for lazy loading config files.
+
+    This class can be used as a "get_config" callable, lazily loading the
+    specified paths on first call. This also allows the paths to be adjusted at
+    load-time before the configuration is first read.
+    """
+
     def __init__(self, config, paths, expanduser=True, leaf=None):
         self.config = config
         self.paths = paths
@@ -53,6 +61,13 @@ class LazyConfigReader(object):
             return self.config
 
 class ConfigOption(object):
+    """
+    Configuration option helper.
+
+    When called it in turn calls the get_config callable and then attempts to
+    retrieve the specified option. If the section or option does not exist,
+    it raises a FeatureUnconfigured exception.
+    """
     def __init__(self, get_config, section, option):
         self.get_config = get_config
         self.section, self.option = section, option

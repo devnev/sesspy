@@ -22,17 +22,34 @@ import sys
 from . import six
 
 class ResolveError(LookupError):
+    """
+    Raised when a ComponentRef is unable to resolve its ref.
+    """
     pass
 
 class ComponentRef(object):
-    def __init__(self, ref, name=None, obj=None, reg=None):
+    """
+    Reference wrapper for lazy loading of components.
+
+    The reference may be a component, another reference, a component registry
+    key or an import path.
+
+    If used as a class attribute, any valid reference may be assigned to that
+    attribute for instances of that class, and a new ComponentRef will be
+    created for that instance. In this case it is recommended to set the "name"
+    parameter to the attribute name (for slotted types, a free slot).
+
+    When a refernce cannot be resolved, a ResolveError is raised.
+    """
+
+    def __init__(self, ref, name=None, reg=None, obj=None):
         self.ref = ref
         self.name = name
-        self.obj = obj
         if reg is None:
             from .registry import default_registry
             reg = default_registry
         self.reg = reg
+        self.obj = obj
 
     def copy(self, **kwargs):
         kwargs.setdefault('ref', self.ref)
@@ -48,14 +65,16 @@ class ComponentRef(object):
             id(self),
         )
 
-    def __get__(self, obj, type):
+    def __get__(self, obj, owner=None):
         if obj is None:
             return self
         elif hasattr(obj, '__slots__'):
             # handle types with __slots__: self.name must refer to another slot
+            if owner is None:
+                owner = type(obj)
             if not self.name:
                 return self
-            elif getattr(type, self.name, None) is self:
+            elif getattr(owner, self.name, None) is self:
                 # avoid recursion
                 return self
             else:
@@ -63,11 +82,11 @@ class ComponentRef(object):
         else:
             # otherwise try and get instance from __dict__, fall back to self
             try:
-                d = obj.__dict__
+                attrdict = obj.__dict__
             except AttributeError:
                 return self
             else:
-                return d.get(self.dictkey, self)
+                return attrdict.get(self.dictkey, self)
 
     def __set__(self, obj, ref):
         # convert ref to ComponentRef and bind to obj
@@ -101,19 +120,20 @@ class ComponentRef(object):
                 _imp, _from = self.ref.rsplit('.', 1)
                 _temp = __import__(_imp, fromlist=[_from])
                 resolved = getattr(_temp, _from)
-            except Exception:
-                e = sys.exc_info()[1]
-                e = ResolveError("Failed to import ref %r: %s"
-                                 % (self.ref, e))
-                six.reraise(ResolveError, e, sys.exc_info()[2])
+            except (ImportError, AttributeError):
+                # XXX: only want to catch AttributeError for getattr call
+                exc = sys.exc_info()[1]
+                exc = ResolveError("Failed to import ref %r: %s"
+                                   % (self.ref, exc))
+                six.reraise(ResolveError, exc, sys.exc_info()[2])
         elif isinstance(self.ref, six.string_types) and self.reg is not None:
             try:
                 resolved = self.reg[self.ref]
             except KeyError:
-                e = sys.exc_info()[1]
-                e = ResolveError("Failed to lookup ref %r: %s"
-                                 % (self.ref, e))
-                six.reraise(ResolveError, e, sys.exc_info()[2])
+                exc = sys.exc_info()[1]
+                exc = ResolveError("Failed to lookup ref %r: %s"
+                                 % (self.ref, exc))
+                six.reraise(ResolveError, exc, sys.exc_info()[2])
             if hasattr(resolved, 'resolve'):
                 # in case of reference-to-reference, try "transitive" resolve
                 resolved = resolved.resolve()
@@ -121,7 +141,8 @@ class ComponentRef(object):
             resolved = None
 
         if not callable(resolved):
-            raise ResolveError("Component ref %r does not resolve to a session factory" % self.ref)
+            raise ResolveError("Component ref %r does not resolve to"
+                               " a session factory" % self.ref)
         self.ref = resolved
 
         return resolved

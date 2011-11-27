@@ -30,7 +30,7 @@ class Session(object):
     def __enter__(self):
         return self.open()
 
-    def __exit__(self, exc, type, tb):
+    def __exit__(self, exc, typ, tb):
         if exc is None:
             self.commit()
         else:
@@ -62,20 +62,24 @@ class LocalOpeners(object):
         try:
             return getattr(self.openers, str(id(config)))
         except AttributeError:
-            six.reraise(KeyError, KeyError(str(sys.exc_info()[1])), sys.exc_info()[2])
+            six.reraise(KeyError,
+                        KeyError(str(sys.exc_info()[1])),
+                        sys.exc_info()[2])
 
     def __setitem__(self, config, opener):
         setattr(self.openers, str(id(config)), opener)
 
     def close_remaining(self):
         for cid, opener in list(self.openers.__dict__.items()):
-            if hasattr(opener, 'close'):
-                try:
-                    opener.close()
-                except Exception:
-                    e = sys.exc_info()[1]
-                    warnings.warn("An exception was raised while closing openers: " + str(e))
             del self.openers.__dict__[cid]
+            if not hasattr(opener, 'close'):
+                continue
+            try:
+                opener.close()
+            except Exception:
+                exc = sys.exc_info()[1]
+                warnings.warn("An exception was raised while closing openers: "
+                              + str(exc))
 
     def clear(self):
         self.openers.__dict__.clear()
@@ -136,7 +140,7 @@ class SingletonFactory(SessionFactoryBase):
 
         if instance_opener is None:
             from . import openers
-            instance_opener = SingletonOpener
+            instance_opener = openers.SingletonOpener
         self.instance_opener = instance_opener
 
         self.noretry_exceptions = noretry_exceptions

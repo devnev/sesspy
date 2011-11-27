@@ -22,13 +22,22 @@ from .ref import ComponentRef
 from . import six
 
 class ComponentInjector(object):
+    """
+    Function decorator that injects a session into the call arguments.
+
+    This can be wrapped around methods or free functions (e.g. using the
+    "with_component" helper). When it is called, it will open a session for the
+    specified component and inject it into the call arguments with the
+    specified keyword. If the keyword argument is already present in the call,
+    it is not overridden.
+    """
+
     def __init__(self, ref, func, arg_kw):
         for attr in ('__name__', '__doc__', '__module__'):
             if hasattr(func, attr):
                 setattr(self, attr, getattr(func, attr))
             self.__dict__.update(getattr(func, '__dict__', {}))
         self.func = func
-        # XXX: maybe check for "resolve" method instead?
         if not callable(ref):
             ref = ComponentRef(ref)
         self.ref = ref
@@ -70,11 +79,15 @@ class ComponentInjector(object):
             return self.func(*args, **kwargs)
 
 def with_component(ref, arg=None, injector=ComponentInjector):
+    """
+    Helper to wrap a function in a ComponentInjector.
+    """
     if arg is None:
         if isinstance(ref, six.string_types) and '.' not in ref:
             arg = ref
         else:
-            raise ValueError("arg must not be None unless ref is a registry reference")
+            raise ValueError("arg must not be None unless ref"
+                             " is a registry reference")
     def decorator(func):
         return injector(ref, func, arg)
     return decorator

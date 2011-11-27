@@ -35,7 +35,10 @@ class ConnectionFactory(object):
         engine = create_engine(db_uri, **self.engine_kwargs)
         return engine
 
-def db_connection(db_uri, engine_args=None, name=None, registry=None, noretry_exceptions=None, connection_factory=ConnectionFactory):
+def db_connection(db_uri, engine_args=None,
+                  name=None, registry=None,
+                  noretry_exceptions=None,
+                  connection_factory=ConnectionFactory):
     from . import session, openers
 
     component = session.SingletonFactory(
@@ -69,7 +72,9 @@ class ORMSessionFactory(object):
     def abort(self, session):
         session.rollback()
 
-def orm_session(db_uri, engine_kwargs=None, name=None, registry=None, noretry_exceptions=None):
+def orm_session(db_uri, engine_kwargs=None,
+                name=None, registry=None,
+                noretry_exceptions=None):
     from . import session
 
     component = session.SingletonFactory(
@@ -86,7 +91,10 @@ def orm_session(db_uri, engine_kwargs=None, name=None, registry=None, noretry_ex
 
     return component
 
-def orm_counting_session(db_uri, engine_kwargs=None, counting_opener=None, name=None, registry=None, noretry_exceptions=None):
+def orm_counting_session(db_uri, engine_kwargs=None,
+                         name=None, registry=None,
+                         noretry_exceptions=None,
+                         counting_opener=None):
     from . import session, openers
     if counting_opener is None:
         counting_opener = openers.CountingOpener

@@ -24,12 +24,19 @@ class DuplicateComponentError(Exception):
     pass
 
 class ComponentRegistry(object):
+    """
+    Simple component registry. Retrieved components are wrapped in a
+    ComponentRef for easier use.
+    """
+
     def __init__(self):
         self.components = {}
 
     def register_component(self, name, component):
         if name in self.components:
-            raise DuplicateComponentError("Component with name %s already registered" % name)
+            raise DuplicateComponentError(
+                "Component with name %s already registered" % name
+            )
         self.components[name] = component
         return component
 
