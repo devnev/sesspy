@@ -19,11 +19,7 @@
 from __future__ import absolute_import
 
 import sys
-
-try:
-    str_ = basestring
-except NameError:
-    str_ = str
+from . import six
 
 class ResolveError(LookupError):
     pass
@@ -100,7 +96,7 @@ class ComponentRef(object):
 
         if callable(self.ref):
             resolved = self.ref
-        elif isinstance(self.ref, str_) and '.' in self.ref:
+        elif isinstance(self.ref, six.string_types) and '.' in self.ref:
             try:
                 _imp, _from = self.ref.rsplit('.', 1)
                 _temp = __import__(_imp, fromlist=[_from])
@@ -109,15 +105,15 @@ class ComponentRef(object):
                 e = sys.exc_info()[1]
                 e = ResolveError("Failed to import ref %r: %s"
                                  % (self.ref, e))
-                raise e, None, sys.exc_info()[2]
-        elif isinstance(self.ref, str_) and self.reg is not None:
+                six.reraise(ResolveError, e, sys.exc_info()[2])
+        elif isinstance(self.ref, six.string_types) and self.reg is not None:
             try:
                 resolved = self.reg[self.ref]
             except KeyError:
                 e = sys.exc_info()[1]
                 e = ResolveError("Failed to lookup ref %r: %s"
                                  % (self.ref, e))
-                raise e, None, sys.exc_info()[2]
+                six.reraise(ResolveError, e, sys.exc_info()[2])
             if hasattr(resolved, 'resolve'):
                 # in case of reference-to-reference, try "transitive" resolve
                 resolved = resolved.resolve()

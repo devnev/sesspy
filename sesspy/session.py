@@ -20,6 +20,7 @@ from __future__ import absolute_import, with_statement
 
 import sys
 import warnings
+from . import six
 
 class Session(object):
     def __init__(self, instance_opener):
@@ -61,7 +62,7 @@ class LocalOpeners(object):
         try:
             return getattr(self.openers, str(id(config)))
         except AttributeError:
-            raise KeyError(str(sys.exc_info()[1])), None, sys.exc_info()[2]
+            six.reraise(KeyError, KeyError(str(sys.exc_info()[1])), sys.exc_info()[2])
 
     def __setitem__(self, config, opener):
         setattr(self.openers, str(id(config)), opener)

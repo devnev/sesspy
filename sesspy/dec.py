@@ -19,11 +19,7 @@
 from __future__ import absolute_import, with_statement
 
 from .ref import ComponentRef
-
-try:
-    str_ = basestring
-except NameError:
-    str_ = str
+from . import six
 
 class ComponentInjector(object):
     def __init__(self, ref, func, arg_kw):
@@ -75,7 +71,7 @@ class ComponentInjector(object):
 
 def with_component(ref, arg=None, injector=ComponentInjector):
     if arg is None:
-        if isinstance(ref, str_) and '.' not in ref:
+        if isinstance(ref, six.string_types) and '.' not in ref:
             arg = ref
         else:
             raise ValueError("arg_kw must not be None unless ref is a registry reference")

@@ -20,10 +20,7 @@ from __future__ import absolute_import, with_statement
 
 import sys
 import threading
-try:
-    import configparser
-except ImportError:
-    import ConfigParser as configparser
+from .six.moves import configparser
 
 class FeatureUnconfigured(Exception):
     pass
