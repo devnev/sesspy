@@ -173,5 +173,130 @@ class Test_CountingOpener(unittest.TestCase):
             calls = [m[0] for m in instance_opener.method_calls]
             self.assertEqual(expect, calls)
 
+    def test_close_aborts_if_open(self):
+        instance_opener = mock.Mock()
+        instance = mock.Mock(spec=[])
+        instance_opener.open.return_value = instance
+
+        opener = openers.CountingOpener(instance_opener)
+        self.assertEqual(instance_opener.method_calls, [])
+
+        inst = opener.open()
+        self.assertEqual(inst, instance)
+        self.assertEqual(instance_opener.method_calls, [
+            ('open', (), {}),
+        ])
+
+        with mock.patch('warnings.warn') as warn:
+            opener.close()
+            self.assertEqual(instance_opener.method_calls, [
+                ('open', (), {}),
+                ('abort', (instance,), {}),
+            ])
+            self.assertEqual(warn.call_count, 1)
+            opener.commit(inst)
+            self.assertEqual(warn.call_count, 2)
+
+        instance_opener.reset_mock()
+
+        instance2 = mock.Mock(spec=())
+        instance_opener.open.return_value = instance2
+        inst = opener.open()
+        self.assertEqual(inst, instance2)
+        self.assertEqual(instance_opener.method_calls, [
+            ('open', (), {}),
+        ])
+
+        opener.commit(inst)
+        self.assertEqual(instance_opener.method_calls, [
+            ('open', (), {}),
+            ('commit', (instance2,), {}),
+        ])
+
+        with mock.patch('warnings.warn') as warn:
+            opener.close()
+            self.assertEqual(instance_opener.method_calls, [
+                ('open', (), {}),
+                ('commit', (instance2,), {}),
+            ])
+            self.assertEqual(warn.called, False)
+
+class Test_LazyCountingOpener(unittest.TestCase):
+
+    def test_reopen_keeps(self):
+        instance_opener = mock.Mock()
+        instance = mock.Mock(spec=[])
+        instance_opener.open.return_value = instance
+
+        opener = openers.LazyCountingOpener(instance_opener)
+        self.assertEqual(instance_opener.method_calls, [])
+
+        inst = opener.open()
+        self.assertEqual(inst, instance)
+        self.assertEqual(instance_opener.method_calls, [
+            ('open', (), {}),
+        ])
+
+        opener.commit(inst)
+        self.assertEqual(instance_opener.method_calls, [
+            ('open', (), {}),
+        ])
+
+        inst2 = opener.open()
+        self.assertEqual(inst2, instance)
+        self.assertEqual(instance_opener.method_calls, [
+            ('open', (), {}),
+        ])
+
+        opener.commit(inst)
+        self.assertEqual(instance_opener.method_calls, [
+            ('open', (), {}),
+        ])
+
+    def test_abort_aborts(self):
+        instance_opener = mock.Mock()
+        instance = mock.Mock(spec=[])
+        instance_opener.open.return_value = instance
+
+        opener = openers.LazyCountingOpener(instance_opener)
+        self.assertEqual(instance_opener.method_calls, [])
+
+        inst = opener.open()
+        self.assertEqual(inst, instance)
+        self.assertEqual(instance_opener.method_calls, [
+            ('open', (), {}),
+        ])
+
+        opener.abort(inst)
+        self.assertEqual(instance_opener.method_calls, [
+            ('open', (), {}),
+            ('abort', (instance,), {}),
+        ])
+
+    def test_close_commits(self):
+        instance_opener = mock.Mock()
+        instance = mock.Mock(spec=[])
+        instance_opener.open.return_value = instance
+
+        opener = openers.LazyCountingOpener(instance_opener)
+        self.assertEqual(instance_opener.method_calls, [])
+
+        inst = opener.open()
+        self.assertEqual(inst, instance)
+        self.assertEqual(instance_opener.method_calls, [
+            ('open', (), {}),
+        ])
+
+        opener.commit(inst)
+        self.assertEqual(instance_opener.method_calls, [
+            ('open', (), {}),
+        ])
+
+        opener.close()
+        self.assertEqual(instance_opener.method_calls, [
+            ('open', (), {}),
+            ('commit', (instance,), {}),
+        ])
+
 if __name__ == '__main__':
     unittest.main()
