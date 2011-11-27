@@ -43,7 +43,7 @@ class Test_FunctionDec(unittest.TestCase):
         ret = mock.Mock()
         func.return_value = ret
 
-        comp = mock.Mock(spec=())
+        comp = mock.Mock(spec=[])
         ctx = mock.Mock(spec=session.Session)
         ctx.__enter__ = mock.Mock()
         ctx.__enter__.return_value = comp
@@ -74,7 +74,7 @@ class Test_FunctionDec(unittest.TestCase):
         ret = mock.Mock()
         func.return_value = ret
 
-        comp = mock.Mock(spec=())
+        comp = mock.Mock(spec=[])
         ctx = mock.Mock(spec=session.Session)
         ctx.__enter__ = mock.Mock()
         ctx.__enter__.return_value = comp
@@ -110,7 +110,7 @@ class Test_MethodDec(unittest.TestCase):
         func.return_value = ret
         bound.return_value = ret
 
-        comp = mock.Mock(spec=())
+        comp = mock.Mock(spec=[])
         ctx = mock.Mock(spec=session.Session)
         ctx.__enter__ = mock.Mock()
         ctx.__enter__.return_value = comp
@@ -157,15 +157,15 @@ class Test_MethodDec(unittest.TestCase):
         func.return_value = ret
         bound.return_value = ret
 
-        comp = mock.Mock(spec=())
+        comp = mock.Mock(spec=[])
         ctx = mock.Mock(spec=session.Session)
         ctx.__enter__ = mock.Mock()
         ctx.__enter__.return_value = comp
         ctx.__exit__ = mock.Mock()
         ctx.__exit__.return_value = None
-        conf = mock.Mock(spec=())
+        conf = mock.Mock(spec=[])
         conf.return_value = ctx
-        conf2 = mock.Mock(spec=())
+        conf2 = mock.Mock(spec=[])
         conf2.return_value = ctx
         ref1 = ref.ComponentRef(conf)
 

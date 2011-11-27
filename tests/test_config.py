@@ -54,7 +54,7 @@ class Test_LazyConfigReader(unittest.TestCase):
 
     def set_up_conf(self, paths, read_paths):
         self.conf = mock.Mock(spec=['read'])
-        self.conf.read = mock.Mock(spec=())
+        self.conf.read = mock.Mock(spec=[])
         self.conf.read.return_value = list(read_paths)
         self.paths = paths
         self.read_paths = read_paths
@@ -112,10 +112,10 @@ class Test_LazyConfigReader(unittest.TestCase):
 class Test_ConfigOption(unittest.TestCase):
 
     def test_call_returns_value(self):
-        get_config = mock.Mock(spec=())
+        get_config = mock.Mock(spec=[])
         conf = mock.Mock(spec=['get'])
-        conf.get = mock.Mock(spec=())
-        value = mock.Mock(spec=())
+        conf.get = mock.Mock(spec=[])
+        value = mock.Mock(spec=[])
 
         get_config.return_value = conf
         conf.get.return_value = value
@@ -135,10 +135,10 @@ class Test_ConfigOption(unittest.TestCase):
         ])
 
     def test_secerr_is_caught(self):
-        get_config = mock.Mock(spec=())
+        get_config = mock.Mock(spec=[])
         conf = mock.Mock(spec=['get'])
-        conf.get = mock.Mock(spec=())
-        value = mock.Mock(spec=())
+        conf.get = mock.Mock(spec=[])
+        value = mock.Mock(spec=[])
 
         get_config.return_value = conf
         conf.get.return_value = value
@@ -158,10 +158,10 @@ class Test_ConfigOption(unittest.TestCase):
         ])
 
     def test_opterr_is_caught(self):
-        get_config = mock.Mock(spec=())
+        get_config = mock.Mock(spec=[])
         conf = mock.Mock(spec=['get'])
-        conf.get = mock.Mock(spec=())
-        value = mock.Mock(spec=())
+        conf.get = mock.Mock(spec=[])
+        value = mock.Mock(spec=[])
 
         get_config.return_value = conf
         conf.get.return_value = value

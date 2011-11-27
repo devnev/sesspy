@@ -38,14 +38,14 @@ from sesspy import registry, ref, session
 
 class Test_Registry(unittest.TestCase):
     def test_register_config(self):
-        config = mock.Mock(spec=())
+        config = mock.Mock(spec=[])
         reg = registry.ComponentRegistry()
         reg.register_component("component", config)
         self.assertEqual(reg["component"].ref, config)
 
     def test_register_duplicate_config(self):
-        config = mock.Mock(spec=())
-        config2 = mock.Mock(spec=())
+        config = mock.Mock(spec=[])
+        config2 = mock.Mock(spec=[])
         reg = registry.ComponentRegistry()
         reg.register_component("component", config)
         self.assertRaises(registry.DuplicateComponentError,

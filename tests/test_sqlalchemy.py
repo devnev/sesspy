@@ -46,7 +46,7 @@ class Test_ConnectionFactory(unittest.TestCase):
 
     def test_callable_uri_is_called(self):
         db_uri = 'sqlite:///'
-        m = mock.Mock(spec=())
+        m = mock.Mock(spec=[])
         m.return_value = db_uri
         c = sqlalchemy.ConnectionFactory(m)
         self.assertEqual(m.called, False)
@@ -59,10 +59,10 @@ class Test_ConnectionFactory(unittest.TestCase):
 class Test_DbConnection(unittest.TestCase):
 
     def test_creates_singletonfactory(self):
-        connection_factory_init = mock.Mock(spec=())
-        connection_factory = mock.Mock(spec=())
+        connection_factory_init = mock.Mock(spec=[])
+        connection_factory = mock.Mock(spec=[])
         connection_factory_init.return_value = connection_factory
-        connection = mock.Mock(spec=())
+        connection = mock.Mock(spec=[])
         connection_factory.return_value = connection
         db_uri = '__test_uri'
 
@@ -100,11 +100,11 @@ class Test_DbConnection(unittest.TestCase):
 
     def test_registers_singletonfactory(self):
         registry = mock.Mock(spec=['register_component'])
-        registry.register_component = mock.Mock(spec=())
-        connection_factory_init = mock.Mock(spec=())
-        connection_factory = mock.Mock(spec=())
+        registry.register_component = mock.Mock(spec=[])
+        connection_factory_init = mock.Mock(spec=[])
+        connection_factory = mock.Mock(spec=[])
         connection_factory_init.return_value = connection_factory
-        connection = mock.Mock(spec=())
+        connection = mock.Mock(spec=[])
         connection_factory.return_value = connection
         db_uri = '__test_uri'
         component_name = 'component1'

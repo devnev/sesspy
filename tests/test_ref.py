@@ -149,14 +149,14 @@ class Test_ComponentRef_descriptor_slots(unittest.TestCase):
 
 class Test_ComponentRef_resolve(unittest.TestCase):
     def test_componentconfig(self):
-        cc = mock.Mock(spec=())
+        cc = mock.Mock(spec=[])
         assert callable(cc)
         ref1 = ref.ComponentRef(cc)
         self.assertEqual(ref1.resolve(), cc)
 
     def test_import(self):
         import sys
-        cc = mock.Mock(spec=())
+        cc = mock.Mock(spec=[])
         assert callable(cc)
         mod = mock.Mock()
         mod.config = cc
@@ -169,7 +169,7 @@ class Test_ComponentRef_resolve(unittest.TestCase):
             del sys.modules['__test_component_ref']
 
     def test_registry_direct(self):
-        cc = mock.Mock(spec=())
+        cc = mock.Mock(spec=[])
         assert callable(cc)
         reg = dict(component=cc)
         ref1 = ref.ComponentRef("component", reg=reg)
@@ -177,7 +177,7 @@ class Test_ComponentRef_resolve(unittest.TestCase):
         self.assertEqual(ref1.ref, cc)
 
     def test_registry_ref(self):
-        cc = mock.Mock(spec=())
+        cc = mock.Mock(spec=[])
         assert callable(cc)
         directref = ref.ComponentRef(cc)
         reg = dict(component=directref)
@@ -193,7 +193,7 @@ class Test_ComponentRef_resolve(unittest.TestCase):
     def test_badimport(self):
         import sys
         modname = '__test_component_ref'
-        mod = mock.Mock(spec=())
+        mod = mock.Mock(spec=[])
         sys.modules[modname] = mod
         try:
             ref1 = ref.ComponentRef(modname+'.config')

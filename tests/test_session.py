@@ -139,11 +139,11 @@ class Test_Session(unittest.TestCase):
 class Test_SingletonFactory(unittest.TestCase):
 
     def test_call_calls_factory_once(self):
-        factory = mock.Mock(spec=())
-        resource = mock.Mock(spec=())
+        factory = mock.Mock(spec=[])
+        resource = mock.Mock(spec=[])
         factory.return_value = resource
 
-        opener_factory = mock.Mock(spec=())
+        opener_factory = mock.Mock(spec=[])
         opener = mock.Mock(spec=['open', 'commit', 'abort'])
         opener_factory.return_value = opener
 
@@ -171,12 +171,12 @@ class Test_SingletonFactory(unittest.TestCase):
         class TestException(Exception):
             pass
 
-        factory = mock.Mock(spec=())
+        factory = mock.Mock(spec=[])
         factory.side_effect = TestException
-        resource = mock.Mock(spec=())
+        resource = mock.Mock(spec=[])
         factory.return_value = resource
 
-        opener_factory = mock.Mock(spec=())
+        opener_factory = mock.Mock(spec=[])
         opener = mock.Mock(spec=['open', 'commit', 'abort'])
         opener_factory.return_value = opener
 
