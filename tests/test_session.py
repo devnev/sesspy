@@ -48,9 +48,9 @@ class Test_Session(unittest.TestCase):
 
     def test_init(self):
         s = session.Session(self.opener)
-        self.assertEquals(self.opener.open.called, False)
-        self.assertEquals(self.opener.commit.called, False)
-        self.assertEquals(self.opener.abort.called, False)
+        self.assertEqual(self.opener.open.called, False)
+        self.assertEqual(self.opener.commit.called, False)
+        self.assertEqual(self.opener.abort.called, False)
 
     def test_opencommit(self):
         inst = mock.Mock()
@@ -58,19 +58,19 @@ class Test_Session(unittest.TestCase):
         s = session.Session(self.opener)
 
         i = s.open()
-        self.assertEquals(i, inst)
-        self.assertEquals(self.opener.open.call_args_list, [
+        self.assertEqual(i, inst)
+        self.assertEqual(self.opener.open.call_args_list, [
             ((), {}),
         ])
-        self.assertEquals(self.opener.commit.called, False)
-        self.assertEquals(self.opener.abort.called, False)
+        self.assertEqual(self.opener.commit.called, False)
+        self.assertEqual(self.opener.abort.called, False)
 
         s.commit()
-        self.assertEquals(self.opener.open.call_count, 1)
-        self.assertEquals(self.opener.commit.call_args_list, [
+        self.assertEqual(self.opener.open.call_count, 1)
+        self.assertEqual(self.opener.commit.call_args_list, [
             ((inst,), {}),
         ])
-        self.assertEquals(self.opener.abort.called, False)
+        self.assertEqual(self.opener.abort.called, False)
 
     def test_openabort(self):
         inst = mock.Mock()
@@ -78,17 +78,17 @@ class Test_Session(unittest.TestCase):
         s = session.Session(self.opener)
 
         i = s.open()
-        self.assertEquals(i, inst)
-        self.assertEquals(self.opener.open.call_args_list, [
+        self.assertEqual(i, inst)
+        self.assertEqual(self.opener.open.call_args_list, [
             ((), {}),
         ])
-        self.assertEquals(self.opener.commit.called, False)
-        self.assertEquals(self.opener.abort.called, False)
+        self.assertEqual(self.opener.commit.called, False)
+        self.assertEqual(self.opener.abort.called, False)
 
         s.abort()
-        self.assertEquals(self.opener.open.call_count, 1)
-        self.assertEquals(self.opener.commit.called, False)
-        self.assertEquals(self.opener.abort.call_args_list, [
+        self.assertEqual(self.opener.open.call_count, 1)
+        self.assertEqual(self.opener.commit.called, False)
+        self.assertEqual(self.opener.abort.call_args_list, [
             ((inst,), {}),
         ])
 
@@ -98,18 +98,18 @@ class Test_Session(unittest.TestCase):
         s = session.Session(self.opener)
 
         with s as i:
-            self.assertEquals(i, inst)
-            self.assertEquals(self.opener.open.call_args_list, [
+            self.assertEqual(i, inst)
+            self.assertEqual(self.opener.open.call_args_list, [
                 ((), {}),
             ])
-            self.assertEquals(self.opener.commit.called, False)
-            self.assertEquals(self.opener.abort.called, False)
+            self.assertEqual(self.opener.commit.called, False)
+            self.assertEqual(self.opener.abort.called, False)
 
-        self.assertEquals(self.opener.open.call_count, 1)
-        self.assertEquals(self.opener.commit.call_args_list, [
+        self.assertEqual(self.opener.open.call_count, 1)
+        self.assertEqual(self.opener.commit.call_args_list, [
             ((inst,), {}),
         ])
-        self.assertEquals(self.opener.abort.called, False)
+        self.assertEqual(self.opener.abort.called, False)
 
     def test_guard_exception(self):
         class TestException(Exception):
@@ -120,19 +120,19 @@ class Test_Session(unittest.TestCase):
 
         try:
             with s as i:
-                self.assertEquals(i, inst)
-                self.assertEquals(self.opener.open.call_args_list, [
+                self.assertEqual(i, inst)
+                self.assertEqual(self.opener.open.call_args_list, [
                     ((), {}),
                 ])
-                self.assertEquals(self.opener.commit.called, False)
-                self.assertEquals(self.opener.abort.called, False)
+                self.assertEqual(self.opener.commit.called, False)
+                self.assertEqual(self.opener.abort.called, False)
                 raise TestException()
         except TestException:
             pass
 
-        self.assertEquals(self.opener.open.call_count, 1)
-        self.assertEquals(self.opener.commit.called, False)
-        self.assertEquals(self.opener.abort.call_args_list, [
+        self.assertEqual(self.opener.open.call_count, 1)
+        self.assertEqual(self.opener.commit.called, False)
+        self.assertEqual(self.opener.abort.call_args_list, [
             ((inst,), {}),
         ])
 
