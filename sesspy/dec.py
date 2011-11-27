@@ -74,7 +74,7 @@ def with_component(ref, arg=None, injector=ComponentInjector):
         if isinstance(ref, six.string_types) and '.' not in ref:
             arg = ref
         else:
-            raise ValueError("arg_kw must not be None unless ref is a registry reference")
+            raise ValueError("arg must not be None unless ref is a registry reference")
     def decorator(func):
         return injector(ref, func, arg)
     return decorator
