@@ -49,7 +49,9 @@ class LazyConfigReader(object):
             paths = [os.path.join(p, self.leaf) for p in paths]
         if self.expanduser:
             paths = [os.path.expanduser(p) for p in paths]
-        return self.config.read(paths)
+        read_paths = self.read_paths or []
+        read_paths.extend(self.config.read(paths))
+        self.read_paths = read_paths
 
     def __call__(self):
         if self.read_paths is not None:
@@ -57,7 +59,7 @@ class LazyConfigReader(object):
         with self.load_lock:
             if self.read_paths is not None:
                 return self.config
-            self.read_paths = self.read()
+            self.read()
             return self.config
 
 class ConfigOption(object):
