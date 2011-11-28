@@ -21,33 +21,42 @@ from __future__ import absolute_import
 from sqlalchemy import create_engine
 from sqlalchemy.orm.session import sessionmaker
 
+def _make_callable_engine_args(db_uri, engine_args):
+    if not callable(db_uri) and not callable(engine_args):
+        return lambda: ((db_uri,), engine_args)
+    if not callable(db_uri):
+        db_uri = (lambda _x: (lambda: _x))(db_uri)
+    if not callable(engine_args):
+        engine_args = (lambda _x: (lambda: _x))(engine_args or {})
+    return lambda: ((db_uri(),), engine_args())
+
+def _maybe_register(component, name, registry):
+    if name:
+        if registry is None:
+            from .registry import default_registry
+            registry = default_registry
+        registry.register_component(name, component)
+
 def db_connection(db_uri, engine_args=None,
                   name=None, registry=None,
                   noretry_exceptions=None,
                   connection_factory=create_engine):
     from . import session, source
 
-    if not callable(db_uri):
-        db_uri = (lambda _x: (lambda: _x))(db_uri)
-    if not callable(engine_args):
-        engine_args = (lambda _x: (lambda: _x))(engine_args or {})
+    args = _make_callable_engine_args(db_uri, engine_args)
 
     component = session.SessionFactory(
         source_factory=source.GuardedFactorySource(
             connection_factory,
             noretry_exceptions,
-            (lambda: ((db_uri(),), engine_args())),
+            args
         ),
         adapter_factory=source.sessionless_source_adapter,
         opener_factory=None,
         local_openers=False,
     )
 
-    if name:
-        if registry is None:
-            from .registry import default_registry
-            registry = default_registry
-        registry.register_component(name, component)
+    _maybe_register(component, name, registry)
 
     return component
 
@@ -73,25 +82,18 @@ def orm_session(db_uri, engine_args=None,
                 connection_factory=create_engine):
     from . import session, source
 
-    if not callable(db_uri):
-        db_uri = (lambda _x: (lambda: _x))(db_uri)
-    if not callable(engine_args):
-        engine_args = (lambda _x: (lambda: _x))(engine_args or {})
+    args = _make_callable_engine_args(db_uri, engine_args)
 
     component = session.SessionFactory(
         source_factory=source.GuardedFactorySource(
             connection_factory,
             noretry_exceptions,
-            (lambda: ((db_uri(),), engine_args())),
+            args
         ),
         adapter_factory=ORMSessionFactory,
     )
 
-    if name:
-        if registry is None:
-            from .registry import default_registry
-            registry = default_registry
-        registry.register_component(name, component)
+    _maybe_register(component, name, registry)
 
     return component
 
@@ -104,26 +106,19 @@ def orm_counting_session(db_uri, engine_args=None,
     if counting_opener is None:
         counting_opener = openers.CountingOpener
 
-    if not callable(db_uri):
-        db_uri = (lambda _x: (lambda: _x))(db_uri)
-    if not callable(engine_args):
-        engine_args = (lambda _x: (lambda: _x))(engine_args or {})
+    args = _make_callable_engine_args(db_uri, engine_args)
 
     component = session.SessionFactory(
         source_factory=source.GuardedFactorySource(
             connection_factory,
             noretry_exceptions,
-            (lambda: ((db_uri(),), engine_args())),
+            args,
         ),
         adapter_factory=ORMSessionFactory,
         opener_factory=counting_opener,
     )
 
-    if name:
-        if registry is None:
-            from .registry import default_registry
-            registry = default_registry
-        registry.register_component(name, component)
+    _maybe_register(component, name, registry)
 
     return component
 
