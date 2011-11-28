@@ -20,41 +20,6 @@ from __future__ import absolute_import
 
 import warnings
 
-class SingletonOpener(object):
-
-    def __init__(self, instance):
-        self.instance = instance
-
-    def open(self):
-        return self.instance
-
-    def commit(self, instance):
-        pass
-
-    def abort(self, instance):
-        pass
-
-class FunctionOpener(object):
-
-    def __init__(self, open_fn, commit_fn=None, abort_fn=None, close_fn=None):
-        self.open_fn, self.close_fn = open_fn, close_fn
-        self.commit_fn, self.abort_fn = commit_fn, abort_fn
-
-    def open(self):
-        return self.open_fn()
-
-    def commit(self, session):
-        if self.commit_fn is not None:
-            self.commit_fn(session)
-
-    def abort(self, session):
-        if self.abort_fn is not None:
-            self.abort_fn(session)
-
-    def close(self):
-        if self.close_fn is not None:
-            self.close_fn()
-
 class CountingOpenerBase(object):
     def __init__(self, session_opener):
         assert not issubclass(CountingOpenerBase, type(self)), \

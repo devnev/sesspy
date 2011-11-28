@@ -86,95 +86,35 @@ class LocalOpeners(object):
 
 default_local_openers = LocalOpeners()
 
-class SessionFactoryBase(object):
-
-    def __init__(self, local_openers=None):
-        if local_openers is None:
+class SessionFactory(object):
+    def __init__(self,
+                 source_factory, adapter_factory,
+                 opener_factory, local_openers=None):
+        self.source_factory = source_factory
+        self.adapter_factory = adapter_factory
+        self.opener_factory = opener_factory
+        if local_openers is None or local_openers is True:
             local_openers = default_local_openers
+        elif local_openers is False:
+            local_openers = None
         self.local_openers = local_openers
 
     def create_opener(self):
-        assert False, "SessionFactoryBase.create_opener is abstract"
+        source = self.source_factory()
+        opener = self.adapter_factory(source)
+        if self.opener_factory is not None:
+            opener = self.opener_factory(opener)
+        return opener
 
-    def local_session(self):
-        if self.local_openers is False:
-            return Session(self.create_opener())
-        try:
-            opener = self.local_openers[self]
-        except KeyError:
+    def open_session(self):
+        if self.local_openers is None:
             opener = self.create_opener()
-            self.local_openers[self] = opener
+        else:
+            try:
+                opener = self.local_openers[self]
+            except KeyError:
+                opener = self.create_opener()
+                self.local_openers[self] = opener
         return Session(opener)
 
-    __call__ = local_session
-
-class Singleton(SessionFactoryBase):
-
-    def __init__(self, instance,
-                 opener_factory=None,
-                 local_openers=None):
-        super(Singleton, self).__init__(local_openers)
-
-        self.instance = instance
-
-        if opener_factory is None:
-            from . import openers
-            opener_factory = openers.SingletonOpener
-        self.opener_factory = opener_factory
-
-    def create_opener(self):
-        return self.opener_factory(self.instance)
-
-class SingletonFactory(SessionFactoryBase):
-
-    def __init__(self, factory,
-                 noretry_exceptions=None,
-                 instance_opener=None,
-                 local_openers=None,
-                 args=None, kwargs=None):
-        super(SingletonFactory, self).__init__(local_openers)
-
-        self.factory = factory
-        self.instance = None
-        self.factory_args = (args, kwargs)
-
-        if instance_opener is None:
-            from . import openers
-            instance_opener = openers.SingletonOpener
-        self.instance_opener = instance_opener
-
-        self.noretry_exceptions = noretry_exceptions
-        self.exception = None
-        import threading
-        self.factory_lock = threading.Lock()
-
-    def create(self):
-        args, kwargs = self.factory_args
-        args, kwargs = (args or ()), (kwargs or {})
-        if self.noretry_exceptions is not None:
-            try:
-                instance = self.factory(*args, **kwargs)
-            except self.noretry_exceptions:
-                self.exception = sys.exc_info()[1]
-                raise
-        else:
-            instance = self.factory(*args, **kwargs)
-        return instance
-
-    def get(self):
-        if self.exception is not None:
-            raise self.exception
-        elif self.instance is not None:
-            return self.instance
-
-        with self.factory_lock:
-            if self.exception is not None:
-                raise self.exception
-            elif self.instance is not None:
-                return self.instance
-
-            self.instance = self.create()
-            return self.instance
-
-    def create_opener(self):
-        return self.instance_opener(self.get())
+    __call__ = open_session

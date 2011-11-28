@@ -36,74 +36,44 @@ import unittest
 import mock
 from sesspy import sqlalchemy
 
-class Test_ConnectionFactory(unittest.TestCase):
-
-    def test_call_creates_engine(self):
-        db_uri = 'sqlite:///'
-        c = sqlalchemy.ConnectionFactory(db_uri)
-        e = c()
-        self.assertEqual(str(e.url), db_uri)
-
-    def test_callable_uri_is_called(self):
-        db_uri = 'sqlite:///'
-        m = mock.Mock(spec=[])
-        m.return_value = db_uri
-        c = sqlalchemy.ConnectionFactory(m)
-        self.assertEqual(m.called, False)
-        e = c()
-        self.assertEqual(m.call_args_list, [
-            ((), {}),
-        ])
-        self.assertEqual(str(e.url), db_uri)
-
 class Test_DbConnection(unittest.TestCase):
 
     def test_creates_singletonfactory(self):
-        connection_factory_init = mock.Mock(spec=[])
         connection_factory = mock.Mock(spec=[])
-        connection_factory_init.return_value = connection_factory
         connection = mock.Mock(spec=[])
         connection_factory.return_value = connection
+        engine_args = dict(param=mock.Mock(spec=[]))
         db_uri = '__test_uri'
 
         component = sqlalchemy.db_connection(
-            db_uri, connection_factory=connection_factory_init,
+            db_uri, engine_args,
+            connection_factory=connection_factory,
         )
-        self.assertEqual(connection_factory_init.call_args_list, [
-            ((db_uri,), {})
-        ])
         self.assertEqual(connection_factory.called, False)
 
         sess = component()
-        self.assertEqual(connection_factory_init.call_count, 1)
         self.assertEqual(connection_factory.call_args_list, [
-            ((), {}),
+            ((db_uri,), engine_args),
         ])
 
         conn = sess.open()
         self.assertEqual(conn, connection)
-        self.assertEqual(connection_factory_init.call_count, 1)
         self.assertEqual(connection_factory.call_count, 1)
 
         sess.commit()
-        self.assertEqual(connection_factory_init.call_count, 1)
         self.assertEqual(connection_factory.call_count, 1)
 
         conn = sess.open()
         self.assertEqual(conn, connection)
-        self.assertEqual(connection_factory_init.call_count, 1)
         self.assertEqual(connection_factory.call_count, 1)
 
         sess.abort()
-        self.assertEqual(connection_factory_init.call_count, 1)
         self.assertEqual(connection_factory.call_count, 1)
 
     def test_registers_singletonfactory(self):
         registry = mock.Mock(spec=['register_component'])
         registry.register_component = mock.Mock(spec=[])
-        connection_factory_init = mock.Mock(spec=[])
         connection_factory = mock.Mock(spec=[])
-        connection_factory_init.return_value = connection_factory
         connection = mock.Mock(spec=[])
         connection_factory.return_value = connection
         db_uri = '__test_uri'
@@ -111,14 +81,39 @@ class Test_DbConnection(unittest.TestCase):
 
         component = sqlalchemy.db_connection(
             db_uri, name=component_name, registry=registry,
-            connection_factory=connection_factory_init,
+            connection_factory=connection_factory,
         )
-        self.assertEqual(connection_factory_init.call_args_list, [
-            ((db_uri,), {}),
-        ])
         self.assertEqual(connection_factory.called, False)
         self.assertEqual(registry.register_component.call_args_list, [
             ((component_name, component), {}),
+        ])
+
+    def test_calls_engine_args(self):
+        connection_factory = mock.Mock(spec=[])
+        connection = mock.Mock(spec=[])
+        connection_factory.return_value = connection
+        db_uri = mock.Mock(spec=[])
+        db_uri_result = '__test_uri'
+        db_uri.return_value = db_uri_result
+        engine_args = mock.Mock(spec=[])
+        engine_args_result = dict(param=mock.Mock(spec=[]))
+        engine_args.return_value = engine_args_result
+
+        component = sqlalchemy.db_connection(
+            db_uri, engine_args,
+            connection_factory=connection_factory,
+        )
+        self.assertEqual(connection_factory.called, False)
+
+        sess = component()
+        self.assertEqual(connection_factory.call_args_list, [
+            ((db_uri_result,), engine_args_result),
+        ])
+        self.assertEqual(db_uri.call_args_list, [
+            ((), {}),
+        ])
+        self.assertEqual(engine_args.call_args_list, [
+            ((), {}),
         ])
 
 if __name__ == '__main__':

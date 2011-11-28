@@ -21,31 +21,26 @@ from __future__ import absolute_import
 from sqlalchemy import create_engine
 from sqlalchemy.orm.session import sessionmaker
 
-class ConnectionFactory(object):
-
-    def __init__(self, db_uri, **kwargs):
-        self.db_uri = db_uri
-        self.engine_kwargs = kwargs
-
-    def __call__(self):
-        db_uri = self.db_uri
-        if callable(db_uri):
-            db_uri = db_uri()
-
-        engine = create_engine(db_uri, **self.engine_kwargs)
-        return engine
-
 def db_connection(db_uri, engine_args=None,
                   name=None, registry=None,
                   noretry_exceptions=None,
-                  connection_factory=ConnectionFactory):
-    from . import session, openers
+                  connection_factory=create_engine):
+    from . import session, source
 
-    component = session.SingletonFactory(
-        factory=connection_factory(db_uri, **(engine_args or {})),
-        instance_opener=openers.SingletonOpener,
+    if not callable(db_uri):
+        db_uri = (lambda _x: (lambda: _x))(db_uri)
+    if not callable(engine_args):
+        engine_args = (lambda _x: (lambda: _x))(engine_args or {})
+
+    component = session.SessionFactory(
+        source_factory=source.GuardedFactorySource(
+            connection_factory,
+            noretry_exceptions,
+            (lambda: ((db_uri(),), engine_args())),
+        ),
+        adapter_factory=source.sessionless_source_adapter,
+        opener_factory=None,
         local_openers=False,
-        noretry_exceptions=noretry_exceptions,
     )
 
     if name:
@@ -74,13 +69,22 @@ class ORMSessionFactory(object):
 
 def orm_session(db_uri, engine_args=None,
                 name=None, registry=None,
-                noretry_exceptions=None):
-    from . import session
+                noretry_exceptions=None,
+                connection_factory=create_engine):
+    from . import session, source
 
-    component = session.SingletonFactory(
-        factory=ConnectionFactory(db_uri, **engine_args),
-        instance_opener=ORMSessionFactory,
-        noretry_exceptions=noretry_exceptions,
+    if not callable(db_uri):
+        db_uri = (lambda _x: (lambda: _x))(db_uri)
+    if not callable(engine_args):
+        engine_args = (lambda _x: (lambda: _x))(engine_args or {})
+
+    component = session.SessionFactory(
+        source_factory=source.GuardedFactorySource(
+            connection_factory,
+            noretry_exceptions,
+            (lambda: ((db_uri(),), engine_args())),
+        ),
+        adapter_factory=ORMSessionFactory,
     )
 
     if name:
@@ -94,18 +98,25 @@ def orm_session(db_uri, engine_args=None,
 def orm_counting_session(db_uri, engine_args=None,
                          name=None, registry=None,
                          noretry_exceptions=None,
-                         counting_opener=None):
-    from . import session, openers
+                         counting_opener=None,
+                         connection_factory=create_engine):
+    from . import session, source, openers
     if counting_opener is None:
         counting_opener = openers.CountingOpener
 
-    component = session.SingletonFactory(
-        factory=ConnectionFactory(db_uri, **engine_args),
-        instance_opener=openers.combine_openers(
-            ORMSessionFactory,
-            counting_opener,
+    if not callable(db_uri):
+        db_uri = (lambda _x: (lambda: _x))(db_uri)
+    if not callable(engine_args):
+        engine_args = (lambda _x: (lambda: _x))(engine_args or {})
+
+    component = session.SessionFactory(
+        source_factory=source.GuardedFactorySource(
+            connection_factory,
+            noretry_exceptions,
+            (lambda: ((db_uri(),), engine_args())),
         ),
-        noretry_exceptions=noretry_exceptions,
+        adapter_factory=ORMSessionFactory,
+        opener_factory=counting_opener,
     )
 
     if name:

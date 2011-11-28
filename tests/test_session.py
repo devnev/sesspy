@@ -136,65 +136,73 @@ class Test_Session(unittest.TestCase):
             ((inst,), {}),
         ])
 
-class Test_SingletonFactory(unittest.TestCase):
+class Test_SessionFactory(unittest.TestCase):
 
-    def test_call_calls_factory_once(self):
-        factory = mock.Mock(spec=[])
-        resource = mock.Mock(spec=[])
-        factory.return_value = resource
+    def test_calls_factory_and_adapter(self):
+        source_factory = mock.Mock(spec=[])
+        adapter_factory = mock.Mock(spec=[])
 
-        opener_factory = mock.Mock(spec=[])
-        opener = mock.Mock(spec=['open', 'commit', 'abort'])
-        opener_factory.return_value = opener
-
-        sf = session.SingletonFactory(
-            factory,
-            instance_opener=opener_factory,
-            local_openers=False,
+        sf = session.SessionFactory(
+            source_factory, adapter_factory,
+            opener_factory=None, local_openers=False,
         )
-        self.assertEqual(factory.called, False)
-        self.assertEqual(opener_factory.called, False)
+        self.assertEqual(source_factory.called, False)
+        self.assertEqual(adapter_factory.called, False)
 
-        for i in range(1, 5):
-            opener = mock.Mock(spec=['open', 'commit', 'abort'])
-            opener_factory.return_value = opener
+        for i in range(5):
+            source_factory.reset_mock()
+            adapter_factory.reset_mock()
+            source_instance = mock.Mock(spec=[])
+            adapted_instance = mock.Mock(spec=['open', 'commit', 'abort'])
+            source_factory.return_value = source_instance
+            adapter_factory.return_value = adapted_instance
+
             s = sf()
-            self.assertEqual(factory.call_args_list, [
+            self.assertEqual(source_factory.call_args_list, [
                 ((), {}),
             ])
-            self.assertEqual(opener_factory.call_args_list,
-                [((resource,), {})] * i,
-            )
-            self.assertEqual(s.instance_opener, opener)
+            self.assertEqual(adapter_factory.call_args_list, [
+                ((source_instance,), {})
+            ])
+            self.assertEqual(s.instance_opener, adapted_instance)
 
-    def test_noretry_exception_is_reraised(self):
-        class TestException(Exception):
-            pass
-
-        factory = mock.Mock(spec=[])
-        factory.side_effect = TestException
-        resource = mock.Mock(spec=[])
-        factory.return_value = resource
-
+    def test_calls_all_factories(self):
+        source_factory = mock.Mock(spec=[])
+        adapter_factory = mock.Mock(spec=[])
         opener_factory = mock.Mock(spec=[])
-        opener = mock.Mock(spec=['open', 'commit', 'abort'])
-        opener_factory.return_value = opener
 
-        sf = session.SingletonFactory(
-            factory,
-            instance_opener=opener_factory,
-            noretry_exceptions=TestException,
+        sf = session.SessionFactory(
+            source_factory,
+            adapter_factory,
+            opener_factory,
             local_openers=False,
         )
-        self.assertEqual(factory.called, False)
+        self.assertEqual(source_factory.called, False)
+        self.assertEqual(adapter_factory.called, False)
         self.assertEqual(opener_factory.called, False)
 
-        for _ in range(5):
-            self.assertRaises(TestException, sf)
-            self.assertEqual(factory.call_args_list, [
+        for i in range(5):
+            source_factory.reset_mock()
+            adapter_factory.reset_mock()
+            opener_factory.reset_mock()
+            source_instance = mock.Mock(spec=[])
+            adapted_instance = mock.Mock(spec=['open', 'commit', 'abort'])
+            opener_instance = mock.Mock(spec=['open', 'commit', 'abort'])
+            source_factory.return_value = source_instance
+            adapter_factory.return_value = adapted_instance
+            opener_factory.return_value = opener_instance
+
+            s = sf()
+            self.assertEqual(source_factory.call_args_list, [
                 ((), {}),
             ])
-            self.assertEqual(opener_factory.called, False)
+            self.assertEqual(adapter_factory.call_args_list, [
+                ((source_instance,), {})
+            ])
+            self.assertEqual(opener_factory.call_args_list, [
+                ((adapted_instance,), {})
+            ])
+            self.assertEqual(s.instance_opener, opener_instance)
 
 if __name__ == '__main__':
     unittest.main()
