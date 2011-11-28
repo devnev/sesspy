@@ -89,7 +89,7 @@ default_local_openers = LocalOpeners()
 class SessionFactory(object):
     def __init__(self,
                  source_factory, adapter_factory,
-                 opener_factory, local_openers=None):
+                 opener_factory=None, local_openers=None):
         self.source_factory = source_factory
         self.adapter_factory = adapter_factory
         self.opener_factory = opener_factory
