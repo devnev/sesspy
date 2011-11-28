@@ -20,6 +20,7 @@ from __future__ import absolute_import
 
 from sqlalchemy import create_engine
 from sqlalchemy.orm.session import sessionmaker
+from . import session, source, openers
 
 def _make_callable_engine_args(db_uri, engine_args):
     if not callable(db_uri) and not callable(engine_args):
@@ -41,7 +42,6 @@ def db_connection(db_uri, engine_args=None,
                   name=None, registry=None,
                   noretry_exceptions=None,
                   connection_factory=create_engine):
-    from . import session, source
 
     args = _make_callable_engine_args(db_uri, engine_args)
 
@@ -80,7 +80,6 @@ def orm_session(db_uri, engine_args=None,
                 name=None, registry=None,
                 noretry_exceptions=None,
                 connection_factory=create_engine):
-    from . import session, source
 
     args = _make_callable_engine_args(db_uri, engine_args)
 
@@ -100,11 +99,8 @@ def orm_session(db_uri, engine_args=None,
 def orm_counting_session(db_uri, engine_args=None,
                          name=None, registry=None,
                          noretry_exceptions=None,
-                         counting_opener=None,
+                         counting_opener=openers.CountingOpener,
                          connection_factory=create_engine):
-    from . import session, source, openers
-    if counting_opener is None:
-        counting_opener = openers.CountingOpener
 
     args = _make_callable_engine_args(db_uri, engine_args)
 
