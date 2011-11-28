@@ -27,7 +27,7 @@ class InstanceSource(object):
         self.instance = instance
 
     def __call__(self):
-        return instance
+        return self.instance
 
 class FactorySource(object):
 

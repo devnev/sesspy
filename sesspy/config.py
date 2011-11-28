@@ -35,7 +35,9 @@ class LazyConfigReader(object):
     load-time before the configuration is first read.
     """
 
-    def __init__(self, config, paths, expanduser=True, leaf=None, encoding=None):
+    def __init__(self, config, paths,
+                 expanduser=True, leaf=None,
+                 encoding=None):
         self.config = config
         self.paths = paths
         self.expanduser = expanduser
@@ -55,11 +57,11 @@ class LazyConfigReader(object):
         if self.encoding:
             for path in paths:
                 try:
-                    f = codecs.open(path, 'r', self.encoding)
+                    conffile = codecs.open(path, 'r', self.encoding)
                 except IOError:
                     continue
-                with f:
-                    self.config.readfp(f)
+                with conffile:
+                    self.config.readfp(conffile)
                     read_paths.append(path)
         else:
             read_paths.extend(self.config.read(paths))
