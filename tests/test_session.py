@@ -34,6 +34,7 @@ if __name__ == '__main__':
 
 import unittest
 import mock
+import threading
 from sesspy import session
 
 class Test_Session(unittest.TestCase):
@@ -203,6 +204,68 @@ class Test_SessionFactory(unittest.TestCase):
                 ((adapted_instance,), {})
             ])
             self.assertEqual(s.instance_opener, opener_instance)
+
+    def test_keeps_local_opener(self):
+        source_factory = mock.Mock(spec=[])
+        adapter_factory = mock.Mock(spec=[])
+        opener_factory = mock.Mock(spec=[])
+        source_instance = mock.Mock(spec=[])
+        adapted_instance = mock.Mock(spec=['open', 'commit', 'abort'])
+        opener_instance = mock.Mock(spec=['open', 'commit', 'abort'])
+        source_factory.return_value = source_instance
+        adapter_factory.return_value = adapted_instance
+        opener_factory.return_value = opener_instance
+
+        sf = session.SessionFactory(
+            source_factory,
+            adapter_factory,
+            opener_factory,
+        )
+        self.assertEqual(source_factory.called, False)
+        self.assertEqual(adapter_factory.called, False)
+        self.assertEqual(opener_factory.called, False)
+
+        for i in range(5):
+            s = sf()
+            self.assertEqual(source_factory.call_count, 1)
+            self.assertEqual(adapter_factory.call_count, 1)
+            self.assertEqual(opener_factory.call_count, 1)
+            self.assertEqual(s.instance_opener, opener_instance)
+
+    def test_kept_opener_is_local(self):
+        source_factory = mock.Mock(spec=[])
+        adapter_factory = mock.Mock(spec=[])
+        opener_factory = mock.Mock(spec=[])
+        source_instance = mock.Mock(spec=[])
+        adapted_instance = mock.Mock(spec=['open', 'commit', 'abort'])
+        opener_instance = mock.Mock(spec=['open', 'commit', 'abort'])
+        source_factory.return_value = source_instance
+        adapter_factory.return_value = adapted_instance
+        opener_factory.return_value = opener_instance
+
+        sf = session.SessionFactory(
+            source_factory,
+            adapter_factory,
+            opener_factory,
+        )
+
+        s = sf()
+        self.assertEqual(s.instance_opener, opener_instance)
+
+        new_opener = mock.Mock(spec=['open', 'commit', 'abort'])
+        opener_factory.return_value = new_opener
+
+        ts = [None]
+        def run():
+            ts[0] = sf()
+        thread = threading.Thread(target=run)
+        thread.start()
+        thread.join()
+
+        self.assertEqual(source_factory.call_count, 2)
+        self.assertEqual(adapter_factory.call_count, 2)
+        self.assertEqual(opener_factory.call_count, 2)
+        self.assertEqual(ts[0].instance_opener, new_opener)
 
 if __name__ == '__main__':
     unittest.main()
