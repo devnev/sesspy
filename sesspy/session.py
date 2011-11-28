@@ -42,13 +42,11 @@ class Session(object):
         return self.instance
 
     def commit(self):
-        assert self.instance is not None
         instance = self.instance
         self.instance = None
         self.instance_opener.commit(instance)
 
     def abort(self):
-        assert self.instance is not None
         instance = self.instance
         self.instance = None
         self.instance_opener.abort(instance)
