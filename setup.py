@@ -8,7 +8,10 @@ setup(
         "sqlalchemy": ["sqlalchemy"],
     },
     package_data = {
-        '': ['/COPYING', '/COPYING.LESSER'],
+        '': [
+            '/COPYING', '/COPYING.LESSER',
+            '/README.rst',
+        ],
     },
     include_package_data=True,
 

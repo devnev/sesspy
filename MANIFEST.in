@@ -1,0 +1,6 @@
+include COPYING*
+include README.rst
+include doc/*
+prune doc/_*
+include tests/*.py
+include run_tests.sh

@@ -2,3 +2,4 @@
 /.coverage
 /htmlcov
 /sesspy.egg-info
+/doc/_build
