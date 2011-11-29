@@ -37,7 +37,7 @@ Example
      source_factory=sesspy.source.GuardedFactorySource(
          factory=my_connect_func,
          args=lambda: ((get_config().get('general', 'my_uri'),), {}),
-     )
+     ),
      adapter_factory=sesspy.source.sessionless_source_adapter,
      local_openers=False,
  )
@@ -67,26 +67,26 @@ Example
      # argument, e.g. o.do_something(foo, example_db=my_db)
      @sesspy.dec.with_component(db, arg='example_db')
      def do_something(self, thing, example_db):
-         example_db.execute(...)
+         example_db.execute(args)
 
      def do_something_else(self):
          # the decorator is basically a fancy way of doing this
          with self.db() as connection:
-             connection.execute(...)
+             connection.execute(args)
 
  class Model2(object):
      # skip explicit ComponentRef, look up in registry
      # note that in this case the 'arg' argument is optional
      @sesspy.dec.with_component('example_db')
      def do_something(self, thing, example_db):
-         example_db.execute(...)
+         example_db.execute(args)
 
      @sesspy.dec.with_component('other_example', arg='connection')
      def do_something_with_connection(self, connection):
-         connection.do(...)
+         connection.do(args)
 
  class Model3(object):
      # skip explicit ComponentRef, use an import path
      @sesspy.dec.with_component('example.db.connector', arg='example_db')
      def do_something(self, thing, example_db):
-         example_db.execute(...)
+         example_db.execute(args)
