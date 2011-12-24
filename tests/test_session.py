@@ -247,6 +247,7 @@ class Test_SessionFactory(unittest.TestCase):
             source_factory,
             adapter_factory,
             opener_factory,
+            local_openers=session.LocalOpeners()
         )
 
         s = sf()

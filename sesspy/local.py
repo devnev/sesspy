@@ -25,7 +25,7 @@ except ImportError:
     from threading import currentThread as current_thread
 
 class Local(object):
-    __slots__ = '_local__key', '_local__lock'
+    __slots__ = '_local__key'
 
     def __new__(cls, *args, **kw):
         if cls != Local:
@@ -36,7 +36,6 @@ class Local(object):
         self = object.__new__(cls)
         key = 'dip.local.' + str(id(self))
         object.__setattr__(self, '_local__key', key)
-        object.__setattr__(self, '_local__lock', RLock())
 
         return self
 
@@ -55,35 +54,29 @@ class Local(object):
             # return attribute dict directly
             if attrdict is None:
                 # create a new __dict__ if necessary
-                lock = object.__getattribute__(self, '_local__lock')
-                with lock:
-                    attrdict = current_thread().__dict__.get(key)
-                    if attrdict is None:
-                        current_thread().__dict__[key] = attrdict = {}
+                attrdict = current_thread().__dict__.get(key)
+                if attrdict is None:
+                    current_thread().__dict__[key] = attrdict = {}
             return attrdict
 
         raise AttributeError("Local has no attribute %r" % name)
 
     def __setattr__(self, name, value):
         key = object.__getattribute__(self, '_local__key')
-        lock = object.__getattribute__(self, '_local__lock')
-        with lock:
-            attrdict = current_thread().__dict__.get(key)
-            # make a shallow copy or a new dict
-            attrdict = dict(attrdict) if attrdict is not None else {}
-            attrdict[name] = value
-            current_thread().__dict__[key] = attrdict
+        attrdict = current_thread().__dict__.get(key)
+        # make a shallow copy or a new dict
+        attrdict = dict(attrdict) if attrdict is not None else {}
+        attrdict[name] = value
+        current_thread().__dict__[key] = attrdict
 
     def __delattr__(self, name):
         key = object.__getattribute__(self, '_local__key')
-        lock = object.__getattribute__(self, '_local__lock')
-        with lock:
-            attrdict = current_thread().__dict__.get(key)
-            # make a shallow copy or a new dict
-            attrdict = dict(attrdict) if attrdict is not None else {}
-            try:
-                del attrdict[name]
-            except KeyError:
-                raise AttributeError("Local has no attribute %r" % name)
-            current_thread().__dict__[key] = attrdict
+        attrdict = current_thread().__dict__.get(key)
+        # make a shallow copy or a new dict
+        attrdict = dict(attrdict) if attrdict is not None else {}
+        try:
+            del attrdict[name]
+        except KeyError:
+            raise AttributeError("Local has no attribute %r" % name)
+        current_thread().__dict__[key] = attrdict
 
