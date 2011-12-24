@@ -16,4 +16,5 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with sesspy.  If not, see <http://www.gnu.org/licenses/>.
 
-__all__ = ["component", "dec", "local", "openers", "registry"]
+__all__ = ["config", "dec", "local", "openers", "ref", "registry", "session",
+           "source", "sqlalchemy"]
