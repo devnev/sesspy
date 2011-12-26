@@ -52,14 +52,6 @@ class ComponentInjector(object):
         kwargs.setdefault('arg_kw', self.arg_kw)
         return ComponentInjector(**kwargs)
 
-    @property
-    def dictkey(self):
-        return '_%s__%s__%s' % (
-            __name__.replace('.', '__'),
-            self.__class__.__name__,
-            id(self),
-        )
-
     def __get__(self, obj, owner=None):
         if hasattr(self.func, '__get__'):
             # when accessing methods, return new instance with bound method
