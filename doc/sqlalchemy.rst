@@ -8,4 +8,5 @@ Sqlalchemy Helpers
     .. autofunction:: orm_session
     .. autofunction:: orm_counting_session
     .. autoclass:: ORMSessionFactory
+        :members:
 
