@@ -30,6 +30,7 @@ if __name__ == '__main__':
         )
     )
 
+import sys
 import unittest
 import mock
 import threading
@@ -53,8 +54,8 @@ class Test_Local(unittest.TestCase):
         def run():
             try:
                 l.b
-            except Exception as e:
-                exc[0] = e
+            except Exception:
+                exc[0] = sys.exc_info()[1]
         thread = threading.Thread(target=run)
         thread.start()
         thread.join()
