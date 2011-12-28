@@ -120,6 +120,14 @@ class LocalOpeners(object):
         setattr(self.openers, str(id(config)), opener)
 
     def close_remaining(self):
+        """
+        Close any remaining openers for the current thread, and remove them
+        from this :class:`LocalOpeners` instance.
+
+        This is particularly useful in conjunction with
+        :class:`.LazyCountingOpener`.
+        """
+
         for cid, opener in list(self.openers.__dict__.items()):
             del self.openers.__dict__[cid]
             if not hasattr(opener, 'close'):
@@ -137,6 +145,21 @@ class LocalOpeners(object):
 default_local_openers = LocalOpeners()
 
 class SessionFactory(object):
+    """
+    A session factory helper that combines various common steps to build
+    sessions.
+
+    :param source_factory: A callable for (lazily) creating a source, e.g.
+        establishing a connection.
+    :param adapter_factory: A callable that takes a single source instance and
+        wraps it with an opener interface.
+    :param opener_factory: If not ``None``, a callable that takes the adapted
+        source and returns another opener.
+    :param local_openers: A cache for thread-local openers. This is required
+        for e.g. counting openers, and may be ``None`` or ``True`` for the
+        default opener cache. ``False`` implies no cache.
+    """
+
     def __init__(self,
                  source_factory, adapter_factory,
                  opener_factory=None, local_openers=None):
