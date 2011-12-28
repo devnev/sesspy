@@ -22,10 +22,22 @@ import sys
 import warnings
 from . import six
 
+_INSTANCE_SENTINEL = object()
+
+class SessionStateException(Exception):
+    """
+    Raised when a session call is made that is not valid in the current state.
+    """
+    pass
+
 class Session(object):
+    """
+    Encapsulate a thread-local session for a particular resource.
+    """
+
     def __init__(self, instance_opener):
         self.instance_opener = instance_opener
-        self.instance = None
+        self.instance = _INSTANCE_SENTINEL
 
     def __enter__(self):
         return self.open()
@@ -36,19 +48,59 @@ class Session(object):
         else:
             self.abort()
 
-    def open(self):
-        assert self.instance is None
+    def open(self, raise_failure=True):
+        """
+        Begin a session and return the corresponding resource/connection.
+
+        If a session has already been opened, a :exc:`SessionStateException` is
+        raised, unless ``raise_failure`` is false, in which case ``None`` is
+        returned.
+        """
+        if self.instance is not _INSTANCE_SENTINEL:
+            if raise_failure:
+                raise SessionStateException("called open on already open session object")
+            return
         self.instance = self.instance_opener.open()
         return self.instance
 
-    def commit(self):
+    def commit(self, raise_failure=True):
+        """
+        End the started session, finalizing any changes.
+
+        The semantics of finalizing depends on the resource. The object
+        returned by ``open`` should not be used after this call, as the connection
+        to the resource may be closed.
+
+        If no session has been opened, a :exc:`SessionStateException` is
+        raised, unless ``raise_failure`` is false, in which case ``None`` is
+        returned.
+        """
+        if self.instance is _INSTANCE_SENTINEL:
+            if raise_failure:
+                raise SessionStateException("called commit on unopened session object")
+            return
         instance = self.instance
-        self.instance = None
+        self.instance = _INSTANCE_SENTINEL
         self.instance_opener.commit(instance)
 
-    def abort(self):
+    def abort(self, raise_failure=True):
+        """
+        End the started session, discarding any changes.
+
+        The semantics of rolling back changes depends on the resource. The
+        object returned by ``open`` should not be used after this call, as the
+        connection to the resource may be closed.
+
+        If no session has been opened, a :exc:`SessionStateException` is
+        raised, unless ``raise_failure`` is false, in which case ``None`` is
+        returned.
+        """
+        if self.instance is _INSTANCE_SENTINEL:
+            if raise_failure:
+                raise SessionStateException("called abort on unopened session object")
+            return
         instance = self.instance
-        self.instance = None
+        self.instance = _INSTANCE_SENTINEL
         self.instance_opener.abort(instance)
 
 class LocalOpeners(object):
