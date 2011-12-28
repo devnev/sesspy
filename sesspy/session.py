@@ -58,7 +58,9 @@ class Session(object):
         """
         if self.instance is not _INSTANCE_SENTINEL:
             if raise_failure:
-                raise SessionStateException("called open on already open session object")
+                raise SessionStateException(
+                    "called open on already open session object"
+                )
             return
         self.instance = self.instance_opener.open()
         return self.instance
@@ -77,7 +79,9 @@ class Session(object):
         """
         if self.instance is _INSTANCE_SENTINEL:
             if raise_failure:
-                raise SessionStateException("called commit on unopened session object")
+                raise SessionStateException(
+                    "called commit on unopened session object"
+                )
             return
         instance = self.instance
         self.instance = _INSTANCE_SENTINEL
@@ -97,7 +101,9 @@ class Session(object):
         """
         if self.instance is _INSTANCE_SENTINEL:
             if raise_failure:
-                raise SessionStateException("called abort on unopened session object")
+                raise SessionStateException(
+                    "called abort on unopened session object"
+                )
             return
         instance = self.instance
         self.instance = _INSTANCE_SENTINEL
