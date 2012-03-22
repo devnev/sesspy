@@ -116,5 +116,21 @@ class Test_DbConnection(unittest.TestCase):
             ((), {}),
         ])
 
+    def test_calls_factory_with_empty_engine_args(self):
+        connection_factory = mock.Mock(spec=[])
+        connection = mock.Mock(spec=[])
+        connection_factory.return_value = connection
+        db_uri = '__test_uri'
+
+        component = sqlalchemy.db_connection(
+            db_uri, connection_factory=connection_factory,
+        )
+        self.assertEqual(connection_factory.called, False)
+
+        sess = component()
+        self.assertEqual(connection_factory.call_args_list, [
+            ((db_uri,), {}),
+        ])
+
 if __name__ == '__main__':
     unittest.main()

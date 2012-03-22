@@ -24,7 +24,7 @@ from . import session, source, openers
 
 def _make_callable_engine_args(db_uri, engine_args):
     if not callable(db_uri) and not callable(engine_args):
-        return lambda: ((db_uri,), engine_args)
+        return lambda: ((db_uri,), (engine_args or {}))
     if not callable(db_uri):
         db_uri = (lambda _x: (lambda: _x))(db_uri)
     if not callable(engine_args):
