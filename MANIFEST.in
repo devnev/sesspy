@@ -2,5 +2,6 @@ include COPYING*
 include README.rst
 include doc/*
 prune doc/_*
+include sesspy/*.py
 include tests/*.py
 include run_tests.sh

@@ -90,3 +90,5 @@ Example
      @sesspy.dec.with_component('example.db.connector', arg='example_db')
      def do_something(self, thing, example_db):
          example_db.execute(args)
+
+.. This work is licensed under the Creative Commons Attribution 3.0 Unported License. To view a copy of this license, visit http://creativecommons.org/licenses/by/3.0/ or send a letter to Creative Commons, 444 Castro Street, Suite 900, Mountain View, California, 94041, USA.
