@@ -60,6 +60,55 @@ def db_connection(db_uri, engine_args=None,
 
     return component
 
+class TransactionWrapper(object):
+
+    def __init__(self, connection, transaction):
+        self._connection = connection
+        self._transaction = transaction
+
+    def __getattr__(self, name):
+        return getattr(self.connection, name)
+
+class TransactionFactory(object):
+
+    def __init__(self, engine):
+        self.engine = engine
+
+    def open(self):
+        connection = self.engine.connect()
+        transaction = connection.begin()
+        return TransactionWrapper(connection, transaction)
+
+    def commit(self, transaction_wrapper):
+        transaction_wrapper._transaction.commit()
+        transaction_wrapper._connection.close()
+
+    def abort(self, transaction_wrapper):
+        transaction_wrapper._transaction.rollback()
+        transaction_wrapper._connection.close()
+
+def transactional_db_connection(db_uri, engine_args=None,
+                                name=None, registry=None,
+                                noretry_exceptions=None,
+                                opener=openers.CountingOpener,
+                                connection_factory=create_engine):
+
+    args = _make_callable_engine_args(db_uri, engine_args)
+
+    component = session.SessionFactory(
+        source_factory=source.GuardedFactorySource(
+            connection_factory,
+            noretry_exceptions,
+            args
+        ),
+        adapter_factory=TransactionFactory,
+        opener_factory=opener,
+    )
+
+    _maybe_register(component, name, registry)
+
+    return component
+
 class ORMSessionFactory(object):
 
     def __init__(self, connection, session_args=None):

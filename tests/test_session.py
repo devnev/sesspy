@@ -137,6 +137,14 @@ class Test_Session(unittest.TestCase):
             ((inst,), {}),
         ])
 
+    def test_multiopen_fails(self):
+        inst = mock.Mock()
+        self.opener.open.return_value = inst
+        s = session.Session(self.opener)
+
+        c = s.open()
+        self.assertRaises(session.SessionStateException, s.open)
+
 class Test_SessionFactory(unittest.TestCase):
 
     def test_calls_factory_and_adapter(self):

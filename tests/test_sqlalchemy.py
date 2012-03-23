@@ -132,5 +132,83 @@ class Test_DbConnection(unittest.TestCase):
             ((db_uri,), {}),
         ])
 
+class Test_Transactions(unittest.TestCase):
+
+    def setUp(self):
+        self.transaction = mock.Mock(spec=['commit', 'rollback'])
+        self.connection = mock.Mock(spec=['begin', 'close'])
+        self.connection.begin.return_value = self.transaction
+        self.engine = mock.Mock(spec=['connect'])
+        self.engine.connect.return_value = self.connection
+        self.engine_factory = mock.Mock(spec=[])
+        self.engine_factory.return_value = self.engine
+        self.db_uri = '__test_uri'
+        self.component = sqlalchemy.transactional_db_connection(
+            self.db_uri, connection_factory=self.engine_factory,
+        )
+
+    def test_connection_is_opened(self):
+        self.assertEqual(self.engine_factory.called, False)
+
+        sess = self.component()
+        self.assertEqual(self.engine_factory.call_count, 1)
+        self.assertEqual(self.engine.called, False)
+        self.assertEqual(self.engine.connect.called, False)
+
+    def test_transaction_is_begun(self):
+        sess = self.component()
+        conn = sess.open()
+        self.assertEqual(self.engine.connect.call_count, 1)
+        self.assertEqual(self.connection.called, False)
+        self.assertEqual(self.connection.begin.call_count, 1)
+        self.assertEqual(self.connection.close.called, False)
+        self.assertEqual(self.transaction.called, False)
+        self.assertEqual(self.transaction.commit.called, False)
+        self.assertEqual(self.transaction.rollback.called, False)
+
+    def test_transaction_is_committed(self):
+        sess = self.component()
+        conn = sess.open()
+        sess.commit()
+        self.assertEqual(self.connection.close.call_count, 1)
+        self.assertEqual(self.transaction.called, False)
+        self.assertEqual(self.transaction.commit.call_count, 1)
+        self.assertEqual(self.transaction.rollback.called, False)
+
+    def test_transaction_is_aborted(self):
+        sess = self.component()
+        conn = sess.open()
+        sess.abort()
+        self.assertEqual(self.transaction.commit.called, False)
+        self.assertEqual(self.transaction.rollback.call_count, 1)
+        self.assertEqual(self.connection.close.call_count, 1)
+
+    def test_recursive_session_is_opened_once(self):
+        sess1 = self.component()
+        conn1 = sess1.open()
+        sess2 = self.component()
+        conn2 = sess2.open()
+        self.assertEqual(self.engine.connect.call_count, 1)
+        self.assertEqual(self.connection.begin.call_count, 1)
+        self.assertEqual(self.connection.close.called, False)
+        self.assertEqual(self.transaction.commit.called, False)
+        self.assertEqual(self.transaction.rollback.called, False)
+
+    def test_recursive_session_is_closed_once(self):
+        sess1 = self.component()
+        conn1 = sess1.open()
+        sess2 = self.component()
+        conn2 = sess2.open()
+
+        sess2.commit()
+        self.assertEqual(self.connection.close.called, False)
+        self.assertEqual(self.transaction.commit.called, False)
+        self.assertEqual(self.transaction.rollback.called, False)
+
+        sess1.commit()
+        self.assertEqual(self.connection.close.call_count, 1)
+        self.assertEqual(self.transaction.commit.call_count, 1)
+        self.assertEqual(self.transaction.rollback.called, False)
+
 if __name__ == '__main__':
     unittest.main()
