@@ -2,6 +2,8 @@ from setuptools import setup, find_packages
 setup(
     name = "sesspy",
     version = "0.2.3",
+    url = "http://nevill.ch/sesspy/",
+
     packages = find_packages(exclude=['tests']),
     install_requires = [],
     extras_require = {
