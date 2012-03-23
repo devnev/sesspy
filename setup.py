@@ -23,4 +23,17 @@ setup(
     description = "Session/Transaction Management and Dependency Injection",
     license = "LGPLv3",
     keywords = "session transaction dependency injection",
+    classifiers = [
+        "Development Status :: 5 - Production/Stable",
+        "Intended Audience :: Developers",
+        "License :: OSI Approved :: GNU Library or Lesser General Public License (LGPL)",
+        "Operating System :: OS Independent",
+        "Programming Language :: Python",
+        "Programming Language :: Python :: 2.5",
+        "Programming Language :: Python :: 2.6",
+        "Programming Language :: Python :: 2.7",
+        "Programming Language :: Python :: 3.2",
+        "Topic :: Software Development :: Libraries :: Python Modules",
+        "Topic :: Software Development :: Testing",
+    ],
 )
