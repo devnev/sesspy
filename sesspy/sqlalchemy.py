@@ -41,6 +41,7 @@ def _maybe_register(component, name, registry):
 def db_connection(db_uri, engine_args=None,
                   name=None, registry=None,
                   noretry_exceptions=None,
+                  opener=openers.CountingOpener,
                   connection_factory=create_engine):
 
     args = _make_callable_engine_args(db_uri, engine_args)
@@ -52,7 +53,7 @@ def db_connection(db_uri, engine_args=None,
             args
         ),
         adapter_factory=source.sessionless_source_adapter,
-        opener_factory=None,
+        opener_factory=opener,
         local_openers=False,
     )
 
