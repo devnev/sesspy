@@ -189,9 +189,12 @@ class SessionFactory(object):
         if self.local_openers is None:
             opener = self.create_opener()
         else:
+            opener = None
             try:
                 opener = self.local_openers[self]
             except KeyError:
+                pass
+            if not opener:
                 opener = self.create_opener()
                 self.local_openers[self] = opener
         return Session(opener)

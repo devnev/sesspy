@@ -99,6 +99,10 @@ class Test_CountingOpener(unittest.TestCase):
                 if count == 0:
                     method_calls.append(('abort', (instance,), {}))
             self.assertEqual(instance_opener.method_calls, method_calls)
+            if count > 0:
+                self.assertTrue(opener)
+            else:
+                self.assertFalse(opener)
 
         self.assertEqual(instance.call_count, 0)
         self.assertEqual(instance.method_calls, [])
@@ -171,22 +175,26 @@ class Test_LazyCountingOpener(unittest.TestCase):
         self.assertEqual(instance_opener.method_calls, [
             ('open', (), {}),
         ])
+        self.assertTrue(opener)
 
         opener.commit(inst)
         self.assertEqual(instance_opener.method_calls, [
             ('open', (), {}),
         ])
+        self.assertTrue(opener)
 
         inst2 = opener.open()
         self.assertEqual(inst2, instance)
         self.assertEqual(instance_opener.method_calls, [
             ('open', (), {}),
         ])
+        self.assertTrue(opener)
 
         opener.commit(inst)
         self.assertEqual(instance_opener.method_calls, [
             ('open', (), {}),
         ])
+        self.assertTrue(opener)
 
     def test_abort_aborts(self):
         instance_opener = mock.Mock()
@@ -201,12 +209,14 @@ class Test_LazyCountingOpener(unittest.TestCase):
         self.assertEqual(instance_opener.method_calls, [
             ('open', (), {}),
         ])
+        self.assertTrue(opener)
 
         opener.abort(inst)
         self.assertEqual(instance_opener.method_calls, [
             ('open', (), {}),
             ('abort', (instance,), {}),
         ])
+        self.assertFalse(opener)
 
     def test_close_commits(self):
         instance_opener = mock.Mock()

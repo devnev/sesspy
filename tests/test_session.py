@@ -276,5 +276,36 @@ class Test_SessionFactory(unittest.TestCase):
         self.assertEqual(opener_factory.call_count, 2)
         self.assertEqual(ts[0].instance_opener, new_opener)
 
+    def test_closed_opener_is_not_reused(self):
+        source_factory = mock.Mock(spec=[])
+        adapter_factory = mock.Mock(spec=[])
+        opener_factory = mock.Mock(spec=[])
+        source_instance = mock.Mock(spec=[])
+        adapted_instance = mock.Mock(spec=['open', 'commit', 'abort'])
+        opener_instance = mock.Mock(spec=['open', 'commit', 'abort', '__nonzero__'])
+        source_factory.return_value = source_instance
+        adapter_factory.return_value = adapted_instance
+        opener_factory.return_value = opener_instance
+
+        sf = session.SessionFactory(
+            source_factory,
+            adapter_factory,
+            opener_factory,
+            local_openers=session.LocalOpeners()
+        )
+
+        s = sf()
+        self.assertEqual(s.instance_opener, opener_instance)
+
+        new_opener = mock.Mock(spec=['open', 'commit', 'abort', '__nonzero__'])
+        opener_factory.return_value = new_opener
+        opener_instance.__nonzero__ = mock.Mock(return_value=False)
+
+        s = sf()
+        self.assertEqual(source_factory.call_count, 2)
+        self.assertEqual(adapter_factory.call_count, 2)
+        self.assertEqual(opener_factory.call_count, 2)
+        self.assertEqual(s.instance_opener, new_opener)
+
 if __name__ == '__main__':
     unittest.main()

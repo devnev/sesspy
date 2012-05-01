@@ -52,6 +52,9 @@ class CountingOpenerBase(object):
                           % (session, self.session))
         self.count -= 1
 
+    def __nonzero__(self):
+        return self.count > 0 or bool(self.session)
+
 class CountingOpener(CountingOpenerBase):
     def __init__(self, session_opener):
         super(CountingOpener, self).__init__(session_opener)
